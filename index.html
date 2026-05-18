@@ -8,395 +8,158 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0d0f0e;
-    --surface: #141714;
-    --surface2: #1c1f1c;
-    --border: #2a2e2a;
-    --accent: #b8f0a0;
-    --accent2: #7dd4fc;
-    --accent3: #f59e0b;
-    --text: #e8ede8;
-    --muted: #6b756b;
-    --danger: #f87171;
+    --bg: #0d0f0e; --surface: #141714; --surface2: #1c1f1c;
+    --border: #2a2e2a; --accent: #b8f0a0; --accent2: #7dd4fc;
+    --accent3: #f59e0b; --text: #e8ede8; --muted: #6b756b; --danger: #f87171;
   }
+  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header { padding: 2rem 3rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 1.5rem; }
+  header h1 { font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 300; color: var(--accent); letter-spacing: -0.02em; }
+  header span { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  main { max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem; }
 
-  body {
-    font-family: 'DM Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
+  /* API key bar */
+  #apiKeyBar {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 1.5rem; padding: 0.75rem 1rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    font-size: 0.72rem; flex-wrap: wrap;
   }
-
-  header {
-    padding: 2rem 3rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 1.5rem;
+  #apiKeyBar label { color: var(--muted); white-space: nowrap; }
+  #apiKeyInput {
+    flex: 1; min-width: 260px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    padding: 0.35rem 0.75rem; border-radius: 2px; outline: none; transition: border-color 0.15s;
   }
-
-  header h1 {
-    font-family: 'Fraunces', serif;
-    font-size: 1.8rem;
-    font-weight: 300;
-    color: var(--accent);
-    letter-spacing: -0.02em;
-  }
-
-  header span {
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  main {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2.5rem 3rem;
-  }
+  #apiKeyInput:focus { border-color: var(--accent2); }
+  #apiKeyInput::placeholder { color: var(--muted); }
+  .api-hint { color: var(--muted); font-size: 0.65rem; }
+  .api-hint a { color: var(--accent2); }
 
   /* Drop Zone */
   #dropzone {
-    border: 1px dashed var(--border);
-    border-radius: 4px;
-    padding: 4rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
+    border: 1px dashed var(--border); border-radius: 4px; padding: 4rem 2rem;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    background: var(--surface); position: relative; overflow: hidden;
   }
-
   #dropzone::before {
-    content: '';
-    position: absolute;
-    inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: radial-gradient(circle at 50% 0%, rgba(184,240,160,0.04) 0%, transparent 70%);
     pointer-events: none;
   }
-
-  #dropzone:hover, #dropzone.drag-over {
-    border-color: var(--accent);
-    background: var(--surface2);
-  }
-
+  #dropzone:hover, #dropzone.drag-over { border-color: var(--accent); background: var(--surface2); }
   #dropzone.drag-over { border-style: solid; }
-
-  .drop-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    opacity: 0.4;
-  }
-
-  #dropzone p {
-    color: var(--muted);
-    font-size: 0.8rem;
-    line-height: 1.8;
-  }
-
-  #dropzone strong {
-    color: var(--text);
-    font-weight: 500;
-  }
-
+  .drop-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.4; }
+  #dropzone p { color: var(--muted); font-size: 0.8rem; line-height: 1.8; }
+  #dropzone strong { color: var(--text); font-weight: 500; }
   #fileInput { display: none; }
-
-  .formats-hint {
-    margin-top: 1rem;
-    font-size: 0.65rem;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-  }
+  .formats-hint { margin-top: 1rem; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; }
 
   /* Status bar */
   #statusBar {
-    display: none;
-    margin-top: 1.5rem;
-    padding: 1rem 1.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-size: 0.78rem;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
+    display: none; margin-top: 1.5rem; padding: 1rem 1.5rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    font-size: 0.78rem; gap: 1rem; align-items: center; flex-wrap: wrap;
   }
-
   .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 2px;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.25rem 0.75rem; border-radius: 2px;
+    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
   }
-
-  .badge-skola24 { background: rgba(184,240,160,0.12); color: var(--accent); border: 1px solid rgba(184,240,160,0.2); }
-  .badge-schoolsoft { background: rgba(125,212,252,0.12); color: var(--accent2); border: 1px solid rgba(125,212,252,0.2); }
-  .badge-pdf { background: rgba(245,158,11,0.12); color: var(--accent3); border: 1px solid rgba(245,158,11,0.2); }
-  .badge-csv { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
-  .badge-tsv { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
-  .badge-error { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
-
-  .spinner {
-    width: 14px; height: 14px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
+  .badge-skola24   { background: rgba(184,240,160,0.12); color: var(--accent);  border: 1px solid rgba(184,240,160,0.2); }
+  .badge-schoolsoft{ background: rgba(125,212,252,0.12); color: var(--accent2); border: 1px solid rgba(125,212,252,0.2); }
+  .badge-pdf       { background: rgba(245,158,11,0.12);  color: var(--accent3); border: 1px solid rgba(245,158,11,0.2); }
+  .badge-csv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
+  .badge-tsv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
+  .badge-image     { background: rgba(192,132,252,0.12); color: #c084fc;        border: 1px solid rgba(192,132,252,0.2); }
+  .badge-error     { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.2); }
+  .spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   #statusMsg { color: var(--muted); }
   #lessonCount { color: var(--accent); font-weight: 500; }
 
   /* Controls */
-  #controls {
-    display: none;
-    margin-top: 1.5rem;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .filter-group {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .filter-group label {
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-right: 0.25rem;
-  }
-
-  .cb-label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
-    font-size: 0.75rem;
-    color: var(--text);
-    padding: 0.3rem 0.6rem;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    transition: all 0.15s;
-    user-select: none;
-  }
-
-  .cb-label:hover { border-color: var(--accent); }
-  .cb-label input { accent-color: var(--accent); }
-
-  .search-input {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 2px;
-    outline: none;
-    width: 200px;
-    transition: border-color 0.15s;
-  }
-
-  .search-input:focus { border-color: var(--accent2); }
-  .search-input::placeholder { color: var(--muted); }
-
-  .btn-group { display: flex; gap: 0.75rem; margin-left: auto; }
-
-  .btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    padding: 0.5rem 1.25rem;
-    border-radius: 2px;
-    border: 1px solid;
-    cursor: pointer;
-    letter-spacing: 0.06em;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #0a0f0a;
-    border-color: var(--accent);
-    font-weight: 500;
-  }
-  .btn-primary:hover { background: #d4f7bc; }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    border-color: var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--text); }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border-color: var(--border);
-    font-size: 0.7rem;
-  }
-  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  #controls { display:none; margin-top:1.5rem; gap:1.5rem; flex-wrap:wrap; align-items:center; }
+  .filter-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .filter-group label { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-right:0.25rem; }
+  .cb-label { display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.75rem; color:var(--text); padding:0.3rem 0.6rem; border:1px solid var(--border); border-radius:2px; transition:all 0.15s; user-select:none; }
+  .cb-label:hover { border-color:var(--accent); }
+  .cb-label input { accent-color:var(--accent); }
+  .search-input { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:2px; outline:none; width:200px; transition:border-color 0.15s; }
+  .search-input:focus { border-color:var(--accent2); }
+  .search-input::placeholder { color:var(--muted); }
+  .btn-group { display:flex; gap:0.75rem; margin-left:auto; }
+  .btn { font-family:'DM Mono',monospace; font-size:0.75rem; padding:0.5rem 1.25rem; border-radius:2px; border:1px solid; cursor:pointer; letter-spacing:0.06em; transition:all 0.15s; display:flex; align-items:center; gap:0.5rem; }
+  .btn-primary { background:var(--accent); color:#0a0f0a; border-color:var(--accent); font-weight:500; }
+  .btn-primary:hover { background:#d4f7bc; }
+  .btn-ghost { background:transparent; color:var(--muted); border-color:var(--border); font-size:0.7rem; }
+  .btn-ghost:hover { color:var(--text); border-color:var(--muted); }
 
   /* Table */
-  #tableWrap {
-    display: none;
-    margin-top: 1.5rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .table-scroll { overflow-x: auto; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.73rem;
-  }
-
-  thead tr {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-  }
-
-  th {
-    padding: 0.6rem 0.9rem;
-    text-align: left;
-    color: var(--muted);
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 0.65rem;
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  th:hover { color: var(--text); }
-
-  td {
-    padding: 0.5rem 0.9rem;
-    border-bottom: 1px solid rgba(42,46,42,0.6);
-    white-space: nowrap;
-    color: var(--text);
-  }
-
-  tr:last-child td { border-bottom: none; }
-
-  tbody tr:hover td { background: rgba(184,240,160,0.03); }
-
-  .type-teaching { color: var(--accent); }
-  .type-admin { color: var(--accent2); }
-  .type-break { color: var(--muted); }
-  .type-passing { color: var(--muted); font-style: italic; }
-  .type-support { color: var(--accent3); }
-
-  .day-Mon { color: #c084fc; }
-  .day-Tue { color: #60a5fa; }
-  .day-Wed { color: var(--accent); }
-  .day-Thu { color: var(--accent3); }
-  .day-Fri { color: #f472b6; }
+  #tableWrap { display:none; margin-top:1.5rem; border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .table-scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:0.73rem; }
+  thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
+  th { padding:0.6rem 0.9rem; text-align:left; color:var(--muted); font-weight:400; letter-spacing:0.08em; text-transform:uppercase; font-size:0.65rem; white-space:nowrap; cursor:pointer; user-select:none; }
+  th:hover { color:var(--text); }
+  td { padding:0.5rem 0.9rem; border-bottom:1px solid rgba(42,46,42,0.6); white-space:nowrap; color:var(--text); }
+  tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:rgba(184,240,160,0.03); }
+  .type-teaching { color:var(--accent); } .type-admin { color:var(--accent2); }
+  .type-break { color:var(--muted); } .type-passing { color:var(--muted); font-style:italic; }
+  .type-support { color:var(--accent3); }
+  .day-Mon { color:#c084fc; } .day-Tue { color:#60a5fa; } .day-Wed { color:var(--accent); }
+  .day-Thu { color:var(--accent3); } .day-Fri { color:#f472b6; }
 
   /* Pagination */
-  #pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1.25rem;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 0.72rem;
-    color: var(--muted);
-  }
-
-  .page-btns { display: flex; gap: 0.5rem; }
-
-  .page-btn {
-    padding: 0.25rem 0.65rem;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    transition: all 0.12s;
-  }
-  .page-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .page-btn.active { background: var(--accent); color: #0a0f0a; border-color: var(--accent); }
-  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #pagination { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-top:1px solid var(--border); background:var(--surface); font-size:0.72rem; color:var(--muted); }
+  .page-btns { display:flex; gap:0.5rem; }
+  .page-btn { padding:0.25rem 0.65rem; border:1px solid var(--border); border-radius:2px; background:transparent; color:var(--text); cursor:pointer; font-family:'DM Mono',monospace; font-size:0.7rem; transition:all 0.12s; }
+  .page-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .page-btn.active { background:var(--accent); color:#0a0f0a; border-color:var(--accent); }
+  .page-btn:disabled { opacity:0.3; cursor:not-allowed; }
 
   /* Warnings */
-  #warnings {
-    display: none;
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background: rgba(245,158,11,0.08);
-    border: 1px solid rgba(245,158,11,0.2);
-    border-radius: 4px;
-    font-size: 0.72rem;
-    color: var(--accent3);
-    line-height: 1.7;
-  }
+  #warnings { display:none; margin-top:1rem; padding:0.75rem 1rem; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:4px; font-size:0.72rem; color:var(--accent3); line-height:1.7; }
 
-  /* Reset link */
-  #resetBtn {
-    display: none;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    cursor: pointer;
-    text-decoration: underline;
-    margin-left: auto;
-  }
-  #resetBtn:hover { color: var(--danger); }
+  /* Reset */
+  #resetBtn { display:none; background:none; border:none; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.72rem; cursor:pointer; text-decoration:underline; margin-left:auto; }
+  #resetBtn:hover { color:var(--danger); }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Schedule Converter</h1>
-  <span>Skola24 · SchoolSoft · PDF · CSV → .xlsx</span>
-  <button id="resetBtn" onclick="resetApp()">✕ reset</button>
+  <span>Skola24 · SchoolSoft · PDF · CSV · Screenshot</span>
+  <button id="resetBtn" onclick="resetApp()">reset</button>
 </header>
 
 <main>
+  <div id="apiKeyBar">
+    <label>Anthropic API key <em style="opacity:.5">(for screenshot / image parsing)</em></label>
+    <input id="apiKeyInput" type="password" placeholder="sk-ant-…  optional, only needed for .jpg / .png files"
+           oninput="saveKey()" autocomplete="off">
+    <span class="api-hint">Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> &nbsp;·&nbsp; stored in sessionStorage only, never sent anywhere except Anthropic</span>
+  </div>
+
   <div id="dropzone" onclick="document.getElementById('fileInput').click()"
-       ondragover="e=>(e.preventDefault(),this.classList.add('drag-over'))"
+       ondragover="event.preventDefault();this.classList.add('drag-over')"
        ondragleave="this.classList.remove('drag-over')"
        ondrop="handleDrop(event)">
-    <div class="drop-icon">⬡</div>
+    <div class="drop-icon">&#x2B21;</div>
     <p><strong>Drop a schedule file here</strong><br>or click to browse</p>
-    <p class="formats-hint">Skola24 .txt &nbsp;·&nbsp; SchoolSoft .txt &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .csv &nbsp;·&nbsp; .tsv</p>
+    <p class="formats-hint">Skola24 .txt &nbsp;&middot;&nbsp; SchoolSoft .txt &nbsp;&middot;&nbsp; .pdf &nbsp;&middot;&nbsp; .csv &nbsp;&middot;&nbsp; .tsv &nbsp;&middot;&nbsp; .jpg / .png screenshot</p>
   </div>
-  <input type="file" id="fileInput" accept=".txt,.csv,.tsv,.pdf"
+  <input type="file" id="fileInput" accept=".txt,.csv,.tsv,.pdf,.jpg,.jpeg,.png,.webp"
          onchange="handleFile(this.files[0])">
 
   <div id="statusBar">
     <span id="spinnerEl" class="spinner"></span>
-    <span id="statusMsg">Parsing…</span>
+    <span id="statusMsg">Parsing...</span>
     <span id="formatBadge"></span>
     <span id="lessonCount"></span>
   </div>
@@ -411,11 +174,11 @@
       <label class="cb-label"><input type="checkbox" id="excPassing" onchange="applyFilters()"> passing</label>
       <label class="cb-label"><input type="checkbox" id="excSupport" onchange="applyFilters()"> support</label>
     </div>
-    <input class="search-input" id="searchInput" placeholder="Filter subject / teacher / group…"
+    <input class="search-input" id="searchInput" placeholder="Filter subject / teacher / group..."
            oninput="applyFilters()">
     <div class="btn-group">
-      <button class="btn btn-ghost" onclick="copyTSV()">⎘ Copy TSV</button>
-      <button class="btn btn-primary" onclick="exportXLSX()">↓ Download .xlsx</button>
+      <button class="btn btn-ghost" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-primary" onclick="exportXLSX()">Download .xlsx</button>
     </div>
   </div>
 
@@ -445,40 +208,39 @@
 </main>
 
 <script>
-// ─── PDF.js worker ────────────────────────────────────────────────────────────
+// PDF.js worker
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// State
 let allLessons = [];
 let filtered = [];
 let sortCol = 'day';
 let sortDir = 1;
 let page = 1;
 const PAGE_SIZE = 50;
-const warnings = [];
 
-// ─── Day maps ─────────────────────────────────────────────────────────────────
+// Day maps
 const SWE_DAYS = {
-  'måndag': 'Mon', 'mon': 'Mon', '1': 'Mon',
-  'tisdag': 'Tue', 'tue': 'Tue', '2': 'Tue',
-  'onsdag': 'Wed', 'wed': 'Wed', '3': 'Wed',
-  'torsdag': 'Thu', 'thu': 'Thu', '4': 'Thu',
-  'fredag': 'Fri', 'fri': 'Fri', '5': 'Fri',
-  'sat': 'Fri' // treat Sat as Fri fallback
+  'mandag':'Mon','måndag':'Mon','mon':'Mon','1':'Mon','monday':'Mon',
+  'tisdag':'Tue','tue':'Tue','2':'Tue','tuesday':'Tue',
+  'onsdag':'Wed','wed':'Wed','3':'Wed','wednesday':'Wed',
+  'torsdag':'Thu','thu':'Thu','4':'Thu','thursday':'Thu',
+  'fredag':'Fri','fri':'Fri','5':'Fri','friday':'Fri',
+  'sat':'Fri'
 };
 const DAY_ORDER = { Mon:0, Tue:1, Wed:2, Thu:3, Fri:4 };
 
-// ─── Activity classifier ──────────────────────────────────────────────────────
-const ADMIN_KWORDS   = ['arbetstid','planning time','department meeting','apt','arbetslagsmöte','faculty','konferens','development'];
+// Activity classifier
+const ADMIN_KWORDS   = ['arbetstid','planning time','department meeting','apt','arbetslagsmote','faculty','konferens','development'];
 const BREAK_KWORDS   = ['rast','break','lunch','fika'];
-const PASSING_KWORDS = ['passing time','changing time','raststöd'];
-const SUPPORT_KWORDS = ['support session','team teaching','reading comp','lässtöd','stödundervisning'];
+const PASSING_KWORDS = ['passing time','changing time','raststod'];
+const SUPPORT_KWORDS = ['support session','team teaching','reading comp','lasstod','stodundervisning'];
 
 function classifyType(subject) {
-  const s = subject.toLowerCase();
+  const s = (subject||'').toLowerCase();
   if (ADMIN_KWORDS.some(k => s.includes(k)))   return 'admin';
   if (BREAK_KWORDS.some(k => s.includes(k)))   return 'break';
   if (PASSING_KWORDS.some(k => s.includes(k))) return 'passing';
@@ -486,32 +248,37 @@ function classifyType(subject) {
   return 'teaching';
 }
 
-// ─── Time helpers ─────────────────────────────────────────────────────────────
+// Time helpers
 function hhmm(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 }
-
 function parseHHMM(str) {
   if (!str) return 0;
   str = String(str).trim();
-  if (/^\d{3,4}$/.test(str)) {
-    const n = parseInt(str);
-    return Math.floor(n/100)*60 + (n%100);
-  }
-  const [h,m] = str.split(':').map(Number);
-  return h*60 + (m||0);
+  if (/^\d{3,4}$/.test(str)) { const n = parseInt(str); return Math.floor(n/100)*60 + (n%100); }
+  const parts = str.split(':');
+  return parseInt(parts[0]||0)*60 + parseInt(parts[1]||0);
 }
-
-function addMinutes(hhmmStr, mins) {
-  return hhmm(parseHHMM(hhmmStr) + mins);
-}
-
 let _uid = 0;
 function uid() { return String(++_uid); }
 
-// ─── Format detection ─────────────────────────────────────────────────────────
+// API key management
+function saveKey() {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if (v) sessionStorage.setItem('sc_api_key', v);
+  else sessionStorage.removeItem('sc_api_key');
+}
+function getKey() {
+  return sessionStorage.getItem('sc_api_key') || document.getElementById('apiKeyInput').value.trim();
+}
+window.addEventListener('load', () => {
+  const k = sessionStorage.getItem('sc_api_key');
+  if (k) document.getElementById('apiKeyInput').value = k;
+});
+
+// Format detection
 function detectFormat(text, filename) {
   const fn = (filename||'').toLowerCase();
   if (fn.endsWith('.pdf')) return 'pdf';
@@ -522,44 +289,10 @@ function detectFormat(text, filename) {
   return 'tsv';
 }
 
-// ─── Skola24 parser ───────────────────────────────────────────────────────────
+// Skola24 parser
 function parseSkola24(text) {
-  const sections = {};
-  let current = null;
-  let colMap = null;
-
-  for (const rawLine of text.split('\n')) {
-    const line = rawLine.trimEnd();
-    const secMatch = line.match(/^\[(\w[^\]]*)\]\s*$/);
-    if (secMatch) {
-      current = secMatch[1];
-      sections[current] = sections[current] || [];
-      colMap = null;
-      continue;
-    }
-    if (!current) continue;
-    if (line.startsWith('[Rows]')) {
-      const cols = line.replace('[Rows]','').trim().split('\t');
-      colMap = {};
-      cols.forEach((c,i) => colMap[c.trim()] = i);
-      continue;
-    }
-    if (line && !line.startsWith('[') && colMap) {
-      sections[current].push(line.split('\t'));
-    } else if (line && !line.startsWith('[') && !colMap) {
-      sections[current].push(line);
-    }
-  }
-
-  // find Lesson section (key like "Lesson (7100)")
-  const lessonKey = Object.keys(sections).find(k => k.startsWith('Lesson'));
-  if (!lessonKey) return { lessons:[], warn:'No Lesson section found in Skola24 file' };
-
-  const lessonRows = sections[lessonKey];
-  // find colMap line
   let cols = null;
   const lessons = [];
-
   for (const raw of text.split('\n')) {
     const line = raw.trimEnd();
     if (line.includes('[Rows]') && line.includes('PK')) {
@@ -571,179 +304,243 @@ function parseSkola24(text) {
       const get = k => (p[cols[k]]||'').trim();
       const day = SWE_DAYS[(get('DayOfWeek')||'').toLowerCase().split(' ')[0]] || get('DayOfWeek');
       const startMins = parseHHMM(get('Starttime'));
-      const durMins   = parseInt(get('Length')||0);
+      const durMins = parseInt(get('Length')||0);
       lessons.push({
-        id:       uid(),
-        subject:  get('Subject') || get('Course'),
-        day,
-        startTime: hhmm(startMins),
-        endTime:   hhmm(startMins + durMins),
-        durationMin: durMins,
-        teachers: splitList(get('Teacher')),
-        groups:   splitList(get('Group')),
-        rooms:    splitList(get('Room')),
-        period:   get('Period'),
-        weeks:    get('ActualWeeks') || get('Week'),
-        actType:  classifyType(get('Subject') || get('Course')),
+        id: uid(), subject: get('Subject') || get('Course'), day,
+        startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
+        teachers: splitList(get('Teacher')), groups: splitList(get('Group')), rooms: splitList(get('Room')),
+        period: get('Period'), weeks: get('ActualWeeks') || get('Week'),
+        actType: classifyType(get('Subject') || get('Course')),
       });
     }
   }
+  if (!lessons.length) return { lessons:[], warn:'No Lesson section found in Skola24 file' };
   return { lessons };
 }
 
-// ─── SchoolSoft parser ────────────────────────────────────────────────────────
+// SchoolSoft parser
 function parseSchoolSoft(text) {
   const lines = text.split('\n').filter(l => l.trim());
   const header = lines[0].split('\t').map(h => h.trim().toLowerCase());
   const idx = k => header.indexOf(k);
-
   const lessons = [];
   for (let i = 1; i < lines.length; i++) {
     const p = lines[i].split('\t');
     const get = k => (p[idx(k)]||'').trim();
     const startMins = parseHHMM(get('starttime'));
-    const durMins   = parseInt(get('length')||0);
-    const dayRaw    = (get('day')||'').toLowerCase();
-    const day       = SWE_DAYS[dayRaw] || 'Mon';
-    const subj      = get('subject');
+    const durMins = parseInt(get('length')||0);
+    const day = SWE_DAYS[(get('day')||'').toLowerCase()] || 'Mon';
+    const subj = get('subject');
     lessons.push({
-      id:          uid(),
-      subject:     subj,
-      day,
-      startTime:   hhmm(startMins),
-      endTime:     hhmm(startMins + durMins),
-      durationMin: durMins,
-      teachers:    splitList(get('teacher')),
-      groups:      splitList(get('group')),
-      rooms:       splitList(get('room')),
-      period:      get('period'),
-      weeks:       buildWeeks(get('inweek'), get('exweek'), get('realweeks')),
-      actType:     classifyType(subj),
+      id: uid(), subject: subj, day,
+      startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
+      teachers: splitList(get('teacher')), groups: splitList(get('group')), rooms: splitList(get('room')),
+      period: get('period'),
+      weeks: (get('realweeks') && get('realweeks') !== '0') ? get('realweeks') : (get('inweek') && get('exweek') ? get('inweek')+'-'+get('exweek') : get('inweek')||''),
+      actType: classifyType(subj),
     });
   }
   return { lessons };
 }
 
-function buildWeeks(inweek, exweek, realweeks) {
-  if (realweeks && realweeks !== '0') return realweeks;
-  if (inweek && exweek) return `${inweek}–${exweek}`;
-  return inweek || '';
-}
-
-// ─── CSV/TSV parser ───────────────────────────────────────────────────────────
+// CSV/TSV parser
 const COL_ALIASES = {
-  subject:  ['subject','ämne','kurs','course','name'],
+  subject:  ['subject','amne','kurs','course','name'],
   day:      ['day','dag','weekday'],
   startTime:['starttime','start','starttid','begin'],
-  length:   ['length','duration','längd','min'],
-  teacher:  ['teacher','lärare','teachers'],
+  length:   ['length','duration','langd'],
+  teacher:  ['teacher','larare','teachers'],
   group:    ['group','klass','class','grupp'],
   room:     ['room','sal','lokal'],
   period:   ['period'],
   weeks:    ['weeks','veckor','realweeks','inweek'],
 };
-
 function parseCSVTSV(text, delim) {
   const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return { lessons:[], warn:'File appears empty.' };
   const header = lines[0].split(delim).map(h => h.trim().toLowerCase());
-  const find = aliases => {
-    for (const a of aliases) {
-      const i = header.findIndex(h => h.includes(a));
-      if (i >= 0) return i;
-    }
-    return -1;
-  };
+  const find = aliases => { for (const a of aliases) { const i = header.findIndex(h => h.includes(a)); if (i>=0) return i; } return -1; };
   const idxMap = {};
   for (const [k,aliases] of Object.entries(COL_ALIASES)) idxMap[k] = find(aliases);
-
+  const foundCols = Object.values(idxMap).filter(i => i >= 0).length;
+  if (foundCols < 2 || (idxMap.subject < 0 && idxMap.day < 0)) {
+    return { lessons:[], warn:'Could not map columns. Header: "' + lines[0].slice(0,120) + '"' };
+  }
   const lessons = [];
   for (let i = 1; i < lines.length; i++) {
     const p = lines[i].split(delim);
     const get = k => idxMap[k] >= 0 ? (p[idxMap[k]]||'').trim() : '';
+    const subj = get('subject');
+    if (!subj && !get('day') && !get('startTime')) continue;
     const startMins = parseHHMM(get('startTime'));
-    const durMins   = parseInt(get('length')||0);
-    const dayRaw    = (get('day')||'').toLowerCase();
-    const day       = SWE_DAYS[dayRaw] || dayRaw || 'Mon';
-    const subj      = get('subject');
+    const durMins = parseInt(get('length')||0);
+    const day = SWE_DAYS[(get('day')||'').toLowerCase()] || (get('day')||'Mon');
     lessons.push({
-      id:          uid(),
-      subject:     subj,
-      day,
-      startTime:   hhmm(startMins),
-      endTime:     hhmm(startMins + durMins),
-      durationMin: durMins,
-      teachers:    splitList(get('teacher')),
-      groups:      splitList(get('group')),
-      rooms:       splitList(get('room')),
-      period:      get('period'),
-      weeks:       get('weeks'),
-      actType:     classifyType(subj),
+      id: uid(), subject: subj, day,
+      startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
+      teachers: splitList(get('teacher')), groups: splitList(get('group')), rooms: splitList(get('room')),
+      period: get('period'), weeks: get('weeks'), actType: classifyType(subj),
     });
   }
   return { lessons };
 }
 
-// ─── PDF parser (heuristic) ───────────────────────────────────────────────────
+// PDF parser
 async function parsePDF(file) {
-  if (typeof pdfjsLib === 'undefined') {
-    return { lessons:[], warn:'PDF.js not loaded — check internet connection' };
-  }
+  if (typeof pdfjsLib === 'undefined') return { lessons:[], warn:'PDF.js not loaded' };
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   let fullText = '';
   for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p);
-    const tc = await page.getTextContent();
+    const pg = await pdf.getPage(p);
+    const tc = await pg.getTextContent();
     fullText += tc.items.map(i => i.str).join(' ') + '\n';
   }
-
-  // Try to detect embedded format
   if (fullText.includes('Novaschem')) return parseSkola24(fullText);
   if (/\bid\b.*\bsubject\b.*\bday\b/i.test(fullText)) return parseSchoolSoft(fullText);
-
-  // Heuristic: look for time + day patterns
   const lessons = [];
   const timeRe = /(\d{1,2}:\d{2})/g;
-  const dayRe  = /\b(Mon|Tue|Wed|Thu|Fri|Måndag|Tisdag|Onsdag|Torsdag|Fredag)\b/gi;
-  const lines  = fullText.split('\n');
-
-  for (const line of lines) {
+  const dayRe  = /\b(Mon|Tue|Wed|Thu|Fri|Mandag|Tisdag|Onsdag|Torsdag|Fredag)\b/gi;
+  for (const line of fullText.split('\n')) {
     const times = [...line.matchAll(timeRe)].map(m => m[1]);
     const days  = [...line.matchAll(dayRe)].map(m => SWE_DAYS[m[1].toLowerCase()]||m[1]);
     if (times.length >= 1 && days.length >= 1) {
       const startMins = parseHHMM(times[0]);
-      const endMins   = times[1] ? parseHHMM(times[1]) : startMins + 60;
-      const parts     = line.replace(timeRe,'').replace(dayRe,'').trim().split(/\s{2,}/);
-      const subj      = parts[0] || '?';
-      lessons.push({
-        id:          uid(),
-        subject:     subj,
-        day:         days[0],
-        startTime:   hhmm(startMins),
-        endTime:     hhmm(endMins),
-        durationMin: endMins - startMins,
-        teachers:    parts.length > 1 ? [parts[1]] : [],
-        groups:      parts.length > 2 ? [parts[2]] : [],
-        rooms:       [],
-        period:      '',
-        weeks:       '',
-        actType:     classifyType(subj),
-      });
+      const endMins = times[1] ? parseHHMM(times[1]) : startMins + 60;
+      const parts = line.replace(timeRe,'').replace(dayRe,'').trim().split(/\s{2,}/);
+      const subj = parts[0] || '?';
+      lessons.push({ id:uid(), subject:subj, day:days[0], startTime:hhmm(startMins), endTime:hhmm(endMins), durationMin:endMins-startMins, teachers:parts.length>1?[parts[1]]:[], groups:parts.length>2?[parts[2]]:[], rooms:[], period:'', weeks:'', actType:classifyType(subj) });
     }
   }
-  const warn = lessons.length === 0
-    ? 'Could not extract lessons from PDF — try exporting as .txt first'
-    : `PDF heuristic parse: ${lessons.length} lessons found. Results may be imprecise.`;
+  const warn = lessons.length === 0 ? 'Could not extract lessons from PDF.' : 'PDF heuristic parse: ' + lessons.length + ' lessons. Results may be imprecise.';
   return { lessons, warn };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function splitList(s) {
-  if (!s) return [];
-  return s.split(/[,;|]/).map(x => x.trim()).filter(Boolean);
+// Image parser via Claude Vision API
+async function parseImage(file) {
+  const apiKey = getKey();
+  if (!apiKey) {
+    return { lessons:[], warn:'No API key set. Enter your Anthropic API key in the field above to parse screenshots.' };
+  }
+
+  showStatus('loading', 'Sending image to Claude Vision...', 'image');
+
+  const base64 = await fileToBase64(file);
+  const mediaType = file.type || 'image/jpeg';
+
+  const prompt = `You are parsing a school schedule image. Extract every lesson/activity you can see into a JSON array.
+
+Return ONLY valid JSON — no explanation, no markdown fences, just the raw JSON array.
+
+Each lesson object must have these fields (use empty string or empty array if unknown):
+{
+  "subject": "subject or activity name",
+  "day": "Mon|Tue|Wed|Thu|Fri",
+  "startTime": "HH:MM",
+  "endTime": "HH:MM",
+  "durationMin": number,
+  "teachers": ["Teacher Name"],
+  "groups": ["Class or Group Name"],
+  "rooms": ["Room"],
+  "period": "",
+  "weeks": ""
 }
 
-// ─── File handling ────────────────────────────────────────────────────────────
+Rules:
+- day must be one of: Mon, Tue, Wed, Thu, Fri
+- startTime and endTime must be HH:MM format (24h)
+- If duration is not shown, estimate from context or use 60
+- Include ALL activities visible: lessons, breaks, lunch, admin time etc
+- If the schedule shows columns as days and rows as time slots (or vice versa), extract accordingly
+- If a cell shows teacher name, put it in teachers array
+- If a cell shows class/group name, put it in groups array
+
+Return the JSON array now:`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      const msg = err.error?.message || resp.statusText;
+      if (resp.status === 401) return { lessons:[], warn:'Invalid API key. Check your key at console.anthropic.com.' };
+      return { lessons:[], warn:'API error: ' + msg };
+    }
+
+    const data = await resp.json();
+    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+
+    // Strip any accidental markdown fences
+    const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch(e) {
+      // Try to extract JSON array from response
+      const match = clean.match(/\[[\s\S]*\]/);
+      if (match) { try { parsed = JSON.parse(match[0]); } catch(e2) { return { lessons:[], warn:'Claude returned unparseable JSON. Try a clearer screenshot.' }; } }
+      else return { lessons:[], warn:'Claude did not return JSON. Response: ' + clean.slice(0,200) };
+    }
+
+    if (!Array.isArray(parsed)) return { lessons:[], warn:'Expected JSON array, got: ' + typeof parsed };
+
+    const lessons = parsed.map(l => ({
+      id:          uid(),
+      subject:     l.subject || '',
+      day:         SWE_DAYS[(l.day||'').toLowerCase()] || l.day || 'Mon',
+      startTime:   l.startTime || '00:00',
+      endTime:     l.endTime || '00:00',
+      durationMin: l.durationMin || 0,
+      teachers:    Array.isArray(l.teachers) ? l.teachers : splitList(l.teachers||''),
+      groups:      Array.isArray(l.groups)   ? l.groups   : splitList(l.groups||''),
+      rooms:       Array.isArray(l.rooms)    ? l.rooms    : splitList(l.rooms||''),
+      period:      l.period || '',
+      weeks:       l.weeks || '',
+      actType:     classifyType(l.subject || ''),
+    })).filter(l => l.subject || l.startTime !== '00:00');
+
+    const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted. The image may be complex — check results carefully.' : null;
+    return { lessons, warn };
+
+  } catch(err) {
+    return { lessons:[], warn:'Network error calling Claude API: ' + err.message };
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.onerror = () => rej(new Error('File read error'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Helpers
+function splitList(s) {
+  if (!s) return [];
+  return String(s).split(/[,;|]/).map(x => x.trim()).filter(Boolean);
+}
+
+// File handling
 function handleDrop(e) {
   e.preventDefault();
   document.getElementById('dropzone').classList.remove('drag-over');
@@ -752,22 +549,28 @@ function handleDrop(e) {
 
 async function handleFile(file) {
   if (!file) return;
-  showStatus('loading', 'Reading file…');
+  showStatus('loading', 'Reading file...');
 
   try {
-    if (file.name.toLowerCase().endsWith('.pdf')) {
-      showStatus('loading', 'Extracting PDF text…', 'pdf');
+    const fn = file.name.toLowerCase();
+    const isImage = file.type.startsWith('image/') || ['.jpg','.jpeg','.png','.webp','.gif','.bmp'].some(e => fn.endsWith(e));
+
+    if (isImage) {
+      const r = await parseImage(file);
+      finish(r, 'image', file.name);
+    } else if (fn.endsWith('.pdf')) {
+      showStatus('loading', 'Extracting PDF text...', 'pdf');
       const r = await parsePDF(file);
       finish(r, 'pdf', file.name);
     } else {
       const text = await readText(file);
       const fmt = detectFormat(text, file.name);
-      showStatus('loading', 'Parsing…', fmt);
+      showStatus('loading', 'Parsing...', fmt);
       let r;
-      if (fmt === 'skola24')    r = parseSkola24(text);
+      if (fmt === 'skola24')         r = parseSkola24(text);
       else if (fmt === 'schoolsoft') r = parseSchoolSoft(text);
-      else if (fmt === 'csv')   r = parseCSVTSV(text, ',');
-      else                      r = parseCSVTSV(text, '\t');
+      else if (fmt === 'csv')        r = parseCSVTSV(text, ',');
+      else                           r = parseCSVTSV(text, '\t');
       finish(r, fmt, file.name);
     }
   } catch(err) {
@@ -787,32 +590,26 @@ function readText(file) {
 function finish(r, fmt, filename) {
   allLessons = r.lessons || [];
   if (r.warn) showWarning(r.warn);
-  showStatus('done', `Parsed ${filename}`, fmt, allLessons.length);
+  showStatus('done', 'Parsed ' + filename, fmt, allLessons.length);
   document.getElementById('resetBtn').style.display = 'block';
   applyFilters();
 }
 
-// ─── Filters ──────────────────────────────────────────────────────────────────
+// Filters
 function applyFilters() {
   const exAdmin   = document.getElementById('excAdmin').checked;
   const exBreak   = document.getElementById('excBreak').checked;
   const exPassing = document.getElementById('excPassing').checked;
   const exSupport = document.getElementById('excSupport').checked;
   const q = (document.getElementById('searchInput').value||'').toLowerCase();
-
   filtered = allLessons.filter(l => {
     if (exAdmin   && l.actType === 'admin')   return false;
     if (exBreak   && l.actType === 'break')   return false;
     if (exPassing && l.actType === 'passing') return false;
     if (exSupport && l.actType === 'support') return false;
-    if (q) {
-      const blob = [l.subject, ...l.teachers, ...l.groups, ...l.rooms].join(' ').toLowerCase();
-      if (!blob.includes(q)) return false;
-    }
+    if (q) { const blob = [l.subject,...l.teachers,...l.groups,...l.rooms].join(' ').toLowerCase(); if (!blob.includes(q)) return false; }
     return true;
   });
-
-  // sort
   filtered.sort((a,b) => {
     let av = a[sortCol], bv = b[sortCol];
     if (Array.isArray(av)) av = av.join(',');
@@ -821,7 +618,6 @@ function applyFilters() {
     if (sortCol === 'startTime' || sortCol === 'endTime') { av = parseHHMM(av); bv = parseHHMM(bv); }
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
   });
-
   page = 1;
   renderTable();
   document.getElementById('controls').style.display = 'flex';
@@ -832,27 +628,14 @@ function sortBy(col) {
   applyFilters();
 }
 
-// ─── Table render ─────────────────────────────────────────────────────────────
+// Table render
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   const start = (page-1)*PAGE_SIZE;
   const slice = filtered.slice(start, start+PAGE_SIZE);
-
-  tbody.innerHTML = slice.map(l => `
-    <tr>
-      <td>${esc(l.subject)}</td>
-      <td class="day-${l.day}">${l.day}</td>
-      <td>${l.startTime}</td>
-      <td>${l.endTime}</td>
-      <td>${l.durationMin}</td>
-      <td>${l.teachers.map(esc).join(', ')}</td>
-      <td>${l.groups.map(esc).join(', ')}</td>
-      <td>${l.rooms.map(esc).join(', ')}</td>
-      <td>${esc(l.period)}</td>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="${esc(l.weeks)}">${esc(l.weeks)}</td>
-      <td class="type-${l.actType}">${l.actType}</td>
-    </tr>`).join('');
-
+  tbody.innerHTML = slice.map(l =>
+    '<tr><td>'+esc(l.subject)+'</td><td class="day-'+l.day+'">'+l.day+'</td><td>'+l.startTime+'</td><td>'+l.endTime+'</td><td>'+l.durationMin+'</td><td>'+l.teachers.map(esc).join(', ')+'</td><td>'+l.groups.map(esc).join(', ')+'</td><td>'+l.rooms.map(esc).join(', ')+'</td><td>'+esc(l.period)+'</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.weeks)+'">'+esc(l.weeks)+'</td><td class="type-'+l.actType+'">'+l.actType+'</td></tr>'
+  ).join('');
   renderPagination();
   document.getElementById('tableWrap').style.display = 'block';
 }
@@ -861,33 +644,20 @@ function renderPagination() {
   const total = filtered.length;
   const pages = Math.ceil(total / PAGE_SIZE);
   const pg = document.getElementById('pagination');
-
   let btns = '';
-  const show = p => {
-    if (p < 1 || p > pages) return;
-    btns += `<button class="page-btn${p===page?' active':''}" onclick="goPage(${p})">${p}</button>`;
-  };
+  const show = p => { if (p < 1 || p > pages) return; btns += '<button class="page-btn'+(p===page?' active':'')+'" onclick="goPage('+p+')">'+p+'</button>'; };
   show(1);
-  if (page > 3) btns += '<span style="color:var(--muted);padding:0 4px">…</span>';
+  if (page > 3) btns += '<span style="color:var(--muted);padding:0 4px">...</span>';
   for (let p = Math.max(2,page-1); p <= Math.min(pages-1,page+1); p++) show(p);
-  if (page < pages-2) btns += '<span style="color:var(--muted);padding:0 4px">…</span>';
+  if (page < pages-2) btns += '<span style="color:var(--muted);padding:0 4px">...</span>';
   if (pages > 1) show(pages);
-
-  pg.innerHTML = `
-    <span>${total.toLocaleString()} lessons</span>
-    <div class="page-btns">
-      <button class="page-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>
-      ${btns}
-      <button class="page-btn" onclick="goPage(${page+1})" ${page===pages||pages===0?'disabled':''}>›</button>
-    </div>
-    <span>page ${page} / ${pages||1}</span>`;
+  pg.innerHTML = '<span>'+total.toLocaleString()+' lessons</span><div class="page-btns"><button class="page-btn" onclick="goPage('+(page-1)+')" '+(page===1?'disabled':'')+'>&#8249;</button>'+btns+'<button class="page-btn" onclick="goPage('+(page+1)+')" '+(page===pages||pages===0?'disabled':'')+'>&#8250;</button></div><span>page '+page+' / '+(pages||1)+'</span>';
 }
 
 function goPage(p) {
   const pages = Math.ceil(filtered.length/PAGE_SIZE);
   if (p < 1 || p > pages) return;
-  page = p;
-  renderTable();
+  page = p; renderTable();
 }
 
 function esc(s) {
@@ -895,178 +665,102 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── Status ───────────────────────────────────────────────────────────────────
+// Status
 function showStatus(state, msg, fmt, count) {
   const bar = document.getElementById('statusBar');
   bar.style.display = 'flex';
   document.getElementById('spinnerEl').style.display = state==='loading' ? 'block' : 'none';
   document.getElementById('statusMsg').textContent = msg;
-  document.getElementById('lessonCount').textContent = count ? `${count} lessons` : '';
-
+  document.getElementById('lessonCount').textContent = count ? count+' lessons' : '';
   const badge = document.getElementById('formatBadge');
   if (fmt) {
-    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', error:'Error' };
-    badge.className = `badge badge-${fmt}`;
+    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', image:'Screenshot (Claude Vision)', error:'Error' };
+    badge.className = 'badge badge-'+fmt;
     badge.textContent = labels[fmt]||fmt;
-  } else {
-    badge.textContent = '';
-  }
+  } else { badge.textContent = ''; }
 }
 
 function showWarning(msg) {
   const w = document.getElementById('warnings');
   w.style.display = 'block';
-  w.innerHTML = '⚠ ' + esc(msg);
+  w.innerHTML = 'Warning: ' + esc(msg);
 }
 
-// ─── Copy TSV ─────────────────────────────────────────────────────────────────
+// Copy TSV
 function copyTSV() {
   const header = ['ID','Subject','Day','Start','End','Min','Teachers','Groups','Rooms','Period','Weeks','Type'];
-  const rows = [header, ...filtered.map(l => [
-    l.id, l.subject, l.day, l.startTime, l.endTime, l.durationMin,
-    l.teachers.join(';'), l.groups.join(';'), l.rooms.join(';'),
-    l.period, l.weeks, l.actType
-  ])];
+  const rows = [header, ...filtered.map(l => [l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(';'),l.groups.join(';'),l.rooms.join(';'),l.period,l.weeks,l.actType])];
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n'))
-    .then(() => alert('TSV copied to clipboard! Paste into Google Sheets.'))
-    .catch(() => alert('Clipboard unavailable — try HTTPS'));
+    .then(() => alert('TSV copied! Paste into Google Sheets.'))
+    .catch(() => alert('Clipboard unavailable'));
 }
 
-// ─── XLSX Export ──────────────────────────────────────────────────────────────
+// XLSX Export
 function exportXLSX() {
   const wb = XLSX.utils.book_new();
-
-  // Sheet 1: All Lessons
   const s1Data = [['ID','Subject','Day','Start','End','Duration (min)','Teachers','Groups','Rooms','Period','Weeks','Type']];
-  for (const l of filtered) {
-    s1Data.push([l.id, l.subject, l.day, l.startTime, l.endTime, l.durationMin,
-      l.teachers.join(', '), l.groups.join(', '), l.rooms.join(', '),
-      l.period, l.weeks, l.actType]);
-  }
+  for (const l of filtered) s1Data.push([l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(', '),l.groups.join(', '),l.rooms.join(', '),l.period,l.weeks,l.actType]);
   const ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-  styleSheet(ws1, s1Data.length);
   XLSX.utils.book_append_sheet(wb, ws1, 'All Lessons');
-
-  // Sheet 2: By Teacher
   XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'teachers'), 'By Teacher');
-
-  // Sheet 3: By Class
   XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'groups'), 'By Class');
-
-  // Sheet 4: By Room
   XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'rooms'), 'By Room');
-
-  // Sheet 5: Summary
   XLSX.utils.book_append_sheet(wb, buildSummarySheet(filtered), 'Summary');
-
   XLSX.writeFile(wb, 'schedule_export.xlsx');
 }
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
-const SLOT_START = 7*60;   // 07:00
-const SLOT_END   = 18*60;  // 18:00
-const SLOT_SIZE  = 30;     // 30 min buckets
+const SLOT_START = 7*60; const SLOT_END = 18*60; const SLOT_SIZE = 30;
 
 function buildPivotSheet(lessons, entityKey) {
   const slots = [];
   for (let m = SLOT_START; m < SLOT_END; m += SLOT_SIZE) slots.push(hhmm(m));
-
-  // header row: Entity | Mon 07:00 | Mon 07:30 | …
   const headers = ['Entity'];
-  for (const d of DAYS) for (const s of slots) headers.push(`${d} ${s}`);
+  for (const d of DAYS) for (const s of slots) headers.push(d+' '+s);
   const colIdx = (day, slot) => 1 + DAYS.indexOf(day)*slots.length + slots.indexOf(slot);
-
-  // collect entities
   const entities = new Set();
   for (const l of lessons) for (const e of l[entityKey]) if (e) entities.add(e);
   const entityArr = [...entities].sort();
-
   const grid = {};
-  for (const e of entityArr) {
-    grid[e] = new Array(headers.length).fill('');
-    grid[e][0] = e;
-  }
-
+  for (const e of entityArr) { grid[e] = new Array(headers.length).fill(''); grid[e][0] = e; }
   for (const l of lessons) {
     if (!l.day || !DAYS.includes(l.day)) continue;
     const startBucket = Math.floor(parseHHMM(l.startTime)/SLOT_SIZE)*SLOT_SIZE;
-    const endBucket   = Math.ceil(parseHHMM(l.endTime)/SLOT_SIZE)*SLOT_SIZE;
-    const label = entityKey === 'teachers'
-      ? `${l.subject} [${l.groups.join(',')}]`
-      : entityKey === 'groups'
-      ? `${l.subject} (${l.teachers.join(',')})`
-      : `${l.subject} ${l.groups.join(',')}/${l.teachers.join(',')}`;
-
+    const endBucket = Math.ceil(parseHHMM(l.endTime)/SLOT_SIZE)*SLOT_SIZE;
+    const label = entityKey==='teachers' ? l.subject+'['+l.groups.join(',')+']' : entityKey==='groups' ? l.subject+'('+l.teachers.join(',')+')'  : l.subject+' '+l.groups.join(',');
     for (const e of l[entityKey]) {
       if (!grid[e]) continue;
       for (let m = startBucket; m < endBucket; m += SLOT_SIZE) {
         if (m < SLOT_START || m >= SLOT_END) continue;
-        const slot = hhmm(m);
-        const ci = colIdx(l.day, slot);
-        if (ci >= 0 && ci < headers.length) {
-          const cur = grid[e][ci];
-          grid[e][ci] = cur ? cur + ' / ' + label : label;
-        }
+        const ci = colIdx(l.day, hhmm(m));
+        if (ci >= 0 && ci < headers.length) { const cur = grid[e][ci]; grid[e][ci] = cur ? cur+' / '+label : label; }
       }
     }
   }
-
   const aoa = [headers, ...entityArr.map(e => grid[e])];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  styleSheet(ws, aoa.length);
-  return ws;
+  return XLSX.utils.aoa_to_sheet(aoa);
 }
 
 function buildSummarySheet(lessons) {
-  const rows = [['Summary'], ['']];
-
-  // Lessons by subject
+  const rows = [['Summary'],['']];
   const bySubject = {};
   for (const l of lessons) bySubject[l.subject] = (bySubject[l.subject]||0) + 1;
   rows.push(['Lessons by Subject','Count']);
-  for (const [k,v] of Object.entries(bySubject).sort((a,b)=>b[1]-a[1]))
-    rows.push([k, v]);
-
+  for (const [k,v] of Object.entries(bySubject).sort((a,b)=>b[1]-a[1])) rows.push([k,v]);
   rows.push(['']);
-
-  // Teaching hours by teacher
   const byTeacher = {};
-  for (const l of lessons.filter(x=>x.actType==='teaching')) {
-    for (const t of l.teachers) {
-      byTeacher[t] = (byTeacher[t]||0) + l.durationMin;
-    }
-  }
+  for (const l of lessons.filter(x=>x.actType==='teaching')) for (const t of l.teachers) byTeacher[t] = (byTeacher[t]||0) + l.durationMin;
   rows.push(['Teaching Hours by Teacher','Minutes','Hours']);
-  for (const [k,v] of Object.entries(byTeacher).sort((a,b)=>b[1]-a[1]))
-    rows.push([k, v, +(v/60).toFixed(1)]);
-
+  for (const [k,v] of Object.entries(byTeacher).sort((a,b)=>b[1]-a[1])) rows.push([k,v,+(v/60).toFixed(1)]);
   rows.push(['']);
-
-  // By type
   const byType = {};
   for (const l of lessons) byType[l.actType] = (byType[l.actType]||0) + 1;
   rows.push(['Lessons by Type','Count']);
   for (const [k,v] of Object.entries(byType)) rows.push([k,v]);
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  styleSheet(ws, rows.length);
-  return ws;
+  return XLSX.utils.aoa_to_sheet(rows);
 }
 
-function styleSheet(ws, rowCount) {
-  const headerStyle = {
-    font: { bold: true, name: 'Arial', sz: 10 },
-    fill: { fgColor: { rgb: '1C271C' }, patternType: 'solid' },
-    alignment: { horizontal: 'center' }
-  };
-  const range = XLSX.utils.decode_range(ws['!ref']||'A1:A1');
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
-    if (cell) cell.s = headerStyle;
-  }
-}
-
-// ─── Reset ────────────────────────────────────────────────────────────────────
+// Reset
 function resetApp() {
   allLessons = []; filtered = []; _uid = 0;
   document.getElementById('statusBar').style.display = 'none';
