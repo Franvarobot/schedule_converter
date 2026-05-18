@@ -4,8 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Schedule Converter</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+
+// Theme toggle
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('sc_theme', next);
+  document.getElementById('themeToggle').textContent = next === 'dark' ? '☀ Light' : '🌙 Dark';
+}
+(function() {
+  const saved = localStorage.getItem('sc_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('themeToggle').textContent = saved === 'dark' ? '☀ Light' : '🌙 Dark';
+  });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,6 +48,28 @@
     --danger-light: #fdf0ee;
     --purple: #5b2d8e;
     --purple-light: #f3eefb;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0d0f0e;
+    --surface: #141714;
+    --surface2: #1c1f1c;
+    --border: #2a2e2a;
+    --border-strong: #3a3e3a;
+    --accent: #b8f0a0;
+    --accent-light: rgba(184,240,160,0.10);
+    --accent2: #7dd4fc;
+    --accent2-light: rgba(125,212,252,0.10);
+    --accent3: #f59e0b;
+    --accent3-light: rgba(245,158,11,0.10);
+    --gemini: #7dd4fc;
+    --text: #e8ede8;
+    --text2: #b0b8b0;
+    --muted: #6b756b;
+    --danger: #f87171;
+    --danger-light: rgba(248,113,113,0.10);
+    --purple: #c084fc;
+    --purple-light: rgba(192,132,252,0.10);
   }
   body { font-family: 'IBM Plex Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
 
@@ -198,6 +239,18 @@
   /* Reset */
   #resetBtn { display:none; background:none; border:none; color:var(--muted); font-family:'IBM Plex Mono',monospace; font-size:0.7rem; cursor:pointer; text-decoration:underline; margin-left:auto; }
   #resetBtn:hover { color:var(--danger); }
+
+  /* Theme toggle */
+  #themeToggle {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; padding: 0.28rem 0.7rem; border-radius: 4px;
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.4rem;
+    margin-left: auto;
+  }
+  #themeToggle:hover { border-color: var(--border-strong); color: var(--text); }
+  #resetBtn { margin-left: 0.5rem; }
+
 </style>
 </head>
 <body>
@@ -205,6 +258,7 @@
 <header>
   <h1>Schedule<span>.</span>Converter</h1>
   <span class="subtitle">Skola24 · SchoolSoft · PDF · CSV · Screenshot</span>
+  <button id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">☀ Light</button>
   <button id="resetBtn" onclick="resetApp()">↺ reset</button>
 </header>
 
@@ -653,6 +707,8 @@ function resetApp() {
   document.getElementById('resetBtn').style.display='none';
   document.getElementById('searchInput').value=''; document.getElementById('fileInput').value='';
 }
+
+
 </script>
 </body>
 </html>
