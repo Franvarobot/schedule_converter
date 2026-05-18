@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141714;
+    --surface2: #1c1f1c;
+    --border: #2a2e2a;
+    --accent: #b8f0a0;
+    --accent2: #7dd4fc;
+    --accent3: #f59e0b;
+    --text: #e8ede8;
+    --muted: #6b756b;
+    --danger: #f87171;
+  }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    padding: 2rem 3rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+  }
+
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2.5rem 3rem;
+  }
+
+  /* Drop Zone */
+  #dropzone {
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 4rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #dropzone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(184,240,160,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  #dropzone:hover, #dropzone.drag-over {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  #dropzone.drag-over { border-style: solid; }
+
+  .drop-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+
+  #dropzone p {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+
+  #dropzone strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  #fileInput { display: none; }
+
+  .formats-hint {
+    margin-top: 1rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* Status bar */
+  #statusBar {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .badge-skola24 { background: rgba(184,240,160,0.12); color: var(--accent); border: 1px solid rgba(184,240,160,0.2); }
+  .badge-schoolsoft { background: rgba(125,212,252,0.12); color: var(--accent2); border: 1px solid rgba(125,212,252,0.2); }
+  .badge-pdf { background: rgba(245,158,11,0.12); color: var(--accent3); border: 1px solid rgba(245,158,11,0.2); }
+  .badge-csv { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+  .badge-tsv { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+  .badge-error { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #statusMsg { color: var(--muted); }
+  #lessonCount { color: var(--accent); font-weight: 500; }
+
+  /* Controls */
+  #controls {
+    display: none;
+    margin-top: 1.5rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 0.25rem;
+  }
+
+  .cb-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--text);
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .cb-label:hover { border-color: var(--accent); }
+  .cb-label input { accent-color: var(--accent); }
+
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 2px;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.15s;
+  }
+
+  .search-input:focus { border-color: var(--accent2); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .btn-group { display: flex; gap: 0.75rem; margin-left: auto; }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 2px;
+    border: 1px solid;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0f0a;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+  .btn-primary:hover { background: #d4f7bc; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+    font-size: 0.7rem;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Table */
+  #tableWrap {
+    display: none;
+    margin-top: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.73rem;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover { color: var(--text); }
+
+  td {
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid rgba(42,46,42,0.6);
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover td { background: rgba(184,240,160,0.03); }
+
+  .type-teaching { color: var(--accent); }
+  .type-admin { color: var(--accent2); }
+  .type-break { color: var(--muted); }
+  .type-passing { color: var(--muted); font-style: italic; }
+  .type-support { color: var(--accent3); }
+
+  .day-Mon { color: #c084fc; }
+  .day-Tue { color: #60a5fa; }
+  .day-Wed { color: var(--accent); }
+  .day-Thu { color: var(--accent3); }
+  .day-Fri { color: #f472b6; }
+
+  /* Pagination */
+  #pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .page-btns { display: flex; gap: 0.5rem; }
+
+  .page-btn {
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    transition: all 0.12s;
+  }
+  .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .page-btn.active { background: var(--accent); color: #0a0f0a; border-color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Warnings */
+  #warnings {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    color: var(--accent3);
+    line-height: 1.7;
+  }
+
+  /* Reset link */
+  #resetBtn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-left: auto;
+  }
+  #resetBtn:hover { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Schedule Converter</h1>
+  <span>Skola24 · SchoolSoft · PDF · CSV → .xlsx</span>
+  <button id="resetBtn" onclick="resetApp()">✕ reset</button>
+</header>
+
+<main>
+  <div id="dropzone" onclick="document.getElementById('fileInput').click()"
+       ondragover="e=>(e.preventDefault(),this.classList.add('drag-over'))"
+       ondragleave="this.classList.remove('drag-over')"
+       ondrop="handleDrop(event)">
+    <div class="drop-icon">⬡</div>
+    <p><strong>Drop a schedule file here</strong><br>or click to browse</p>
+    <p class="formats-hint">Skola24 .txt &nbsp;·&nbsp; SchoolSoft .txt &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .csv &nbsp;·&nbsp; .tsv</p>
+  </div>
+  <input type="file" id="fileInput" accept=".txt,.csv,.tsv,.pdf"
+         onchange="handleFile(this.files[0])">
+
+  <div id="statusBar">
+    <span id="spinnerEl" class="spinner"></span>
+    <span id="statusMsg">Parsing…</span>
+    <span id="formatBadge"></span>
+    <span id="lessonCount"></span>
+  </div>
+
+  <div id="warnings"></div>
+
+  <div id="controls">
+    <div class="filter-group">
+      <label>Exclude</label>
+      <label class="cb-label"><input type="checkbox" id="excAdmin" onchange="applyFilters()"> admin</label>
+      <label class="cb-label"><input type="checkbox" id="excBreak" onchange="applyFilters()"> break</label>
+      <label class="cb-label"><input type="checkbox" id="excPassing" onchange="applyFilters()"> passing</label>
+      <label class="cb-label"><input type="checkbox" id="excSupport" onchange="applyFilters()"> support</label>
+    </div>
+    <input class="search-input" id="searchInput" placeholder="Filter subject / teacher / group…"
+           oninput="applyFilters()">
+    <div class="btn-group">
+      <button class="btn btn-ghost" onclick="copyTSV()">⎘ Copy TSV</button>
+      <button class="btn btn-primary" onclick="exportXLSX()">↓ Download .xlsx</button>
+    </div>
+  </div>
+
+  <div id="tableWrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('subject')">Subject</th>
+            <th onclick="sortBy('day')">Day</th>
+            <th onclick="sortBy('startTime')">Start</th>
+            <th onclick="sortBy('endTime')">End</th>
+            <th onclick="sortBy('durationMin')">Min</th>
+            <th onclick="sortBy('teachers')">Teacher(s)</th>
+            <th onclick="sortBy('groups')">Group(s)</th>
+            <th onclick="sortBy('rooms')">Room(s)</th>
+            <th onclick="sortBy('period')">Period</th>
+            <th>Weeks</th>
+            <th onclick="sortBy('actType')">Type</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div id="pagination"></div>
+  </div>
+</main>
+
+<script>
+// ─── PDF.js worker ────────────────────────────────────────────────────────────
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let allLessons = [];
+let filtered = [];
+let sortCol = 'day';
+let sortDir = 1;
+let page = 1;
+const PAGE_SIZE = 50;
+const warnings = [];
+
+// ─── Day maps ─────────────────────────────────────────────────────────────────
+const SWE_DAYS = {
+  'måndag': 'Mon', 'mon': 'Mon', '1': 'Mon',
+  'tisdag': 'Tue', 'tue': 'Tue', '2': 'Tue',
+  'onsdag': 'Wed', 'wed': 'Wed', '3': 'Wed',
+  'torsdag': 'Thu', 'thu': 'Thu', '4': 'Thu',
+  'fredag': 'Fri', 'fri': 'Fri', '5': 'Fri',
+  'sat': 'Fri' // treat Sat as Fri fallback
+};
+const DAY_ORDER = { Mon:0, Tue:1, Wed:2, Thu:3, Fri:4 };
+
+// ─── Activity classifier ──────────────────────────────────────────────────────
+const ADMIN_KWORDS   = ['arbetstid','planning time','department meeting','apt','arbetslagsmöte','faculty','konferens','development'];
+const BREAK_KWORDS   = ['rast','break','lunch','fika'];
+const PASSING_KWORDS = ['passing time','changing time','raststöd'];
+const SUPPORT_KWORDS = ['support session','team teaching','reading comp','lässtöd','stödundervisning'];
+
+function classifyType(subject) {
+  const s = subject.toLowerCase();
+  if (ADMIN_KWORDS.some(k => s.includes(k)))   return 'admin';
+  if (BREAK_KWORDS.some(k => s.includes(k)))   return 'break';
+  if (PASSING_KWORDS.some(k => s.includes(k))) return 'passing';
+  if (SUPPORT_KWORDS.some(k => s.includes(k))) return 'support';
+  return 'teaching';
+}
+
+// ─── Time helpers ─────────────────────────────────────────────────────────────
+function hhmm(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+function parseHHMM(str) {
+  if (!str) return 0;
+  str = String(str).trim();
+  if (/^\d{3,4}$/.test(str)) {
+    const n = parseInt(str);
+    return Math.floor(n/100)*60 + (n%100);
+  }
+  const [h,m] = str.split(':').map(Number);
+  return h*60 + (m||0);
+}
+
+function addMinutes(hhmmStr, mins) {
+  return hhmm(parseHHMM(hhmmStr) + mins);
+}
+
+let _uid = 0;
+function uid() { return String(++_uid); }
+
+// ─── Format detection ─────────────────────────────────────────────────────────
+function detectFormat(text, filename) {
+  const fn = (filename||'').toLowerCase();
+  if (fn.endsWith('.pdf')) return 'pdf';
+  const t2 = text.slice(0,500);
+  if (t2.includes('[Source]') && t2.includes('Novaschem')) return 'skola24';
+  if (/^id\tsubject\tday\t/m.test(t2)) return 'schoolsoft';
+  if (fn.endsWith('.csv') || (text.includes(',') && !text.includes('\t'))) return 'csv';
+  return 'tsv';
+}
+
+// ─── Skola24 parser ───────────────────────────────────────────────────────────
+function parseSkola24(text) {
+  const sections = {};
+  let current = null;
+  let colMap = null;
+
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.trimEnd();
+    const secMatch = line.match(/^\[(\w[^\]]*)\]\s*$/);
+    if (secMatch) {
+      current = secMatch[1];
+      sections[current] = sections[current] || [];
+      colMap = null;
+      continue;
+    }
+    if (!current) continue;
+    if (line.startsWith('[Rows]')) {
+      const cols = line.replace('[Rows]','').trim().split('\t');
+      colMap = {};
+      cols.forEach((c,i) => colMap[c.trim()] = i);
+      continue;
+    }
+    if (line && !line.startsWith('[') && colMap) {
+      sections[current].push(line.split('\t'));
+    } else if (line && !line.startsWith('[') && !colMap) {
+      sections[current].push(line);
+    }
+  }
+
+  // find Lesson section (key like "Lesson (7100)")
+  const lessonKey = Object.keys(sections).find(k => k.startsWith('Lesson'));
+  if (!lessonKey) return { lessons:[], warn:'No Lesson section found in Skola24 file' };
+
+  const lessonRows = sections[lessonKey];
+  // find colMap line
+  let cols = null;
+  const lessons = [];
+
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd();
+    if (line.includes('[Rows]') && line.includes('PK')) {
+      const parts = line.replace('[Rows]','').trim().split('\t');
+      cols = {};
+      parts.forEach((c,i) => cols[c.trim()] = i);
+    } else if (cols && line && !line.startsWith('[') && line.includes('\t')) {
+      const p = line.split('\t');
+      const get = k => (p[cols[k]]||'').trim();
+      const day = SWE_DAYS[(get('DayOfWeek')||'').toLowerCase().split(' ')[0]] || get('DayOfWeek');
+      const startMins = parseHHMM(get('Starttime'));
+      const durMins   = parseInt(get('Length')||0);
+      lessons.push({
+        id:       uid(),
+        subject:  get('Subject') || get('Course'),
+        day,
+        startTime: hhmm(startMins),
+        endTime:   hhmm(startMins + durMins),
+        durationMin: durMins,
+        teachers: splitList(get('Teacher')),
+        groups:   splitList(get('Group')),
+        rooms:    splitList(get('Room')),
+        period:   get('Period'),
+        weeks:    get('ActualWeeks') || get('Week'),
+        actType:  classifyType(get('Subject') || get('Course')),
+      });
+    }
+  }
+  return { lessons };
+}
+
+// ─── SchoolSoft parser ────────────────────────────────────────────────────────
+function parseSchoolSoft(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const header = lines[0].split('\t').map(h => h.trim().toLowerCase());
+  const idx = k => header.indexOf(k);
+
+  const lessons = [];
+  for (let i = 1; i < lines.length; i++) {
+    const p = lines[i].split('\t');
+    const get = k => (p[idx(k)]||'').trim();
+    const startMins = parseHHMM(get('starttime'));
+    const durMins   = parseInt(get('length')||0);
+    const dayRaw    = (get('day')||'').toLowerCase();
+    const day       = SWE_DAYS[dayRaw] || 'Mon';
+    const subj      = get('subject');
+    lessons.push({
+      id:          uid(),
+      subject:     subj,
+      day,
+      startTime:   hhmm(startMins),
+      endTime:     hhmm(startMins + durMins),
+      durationMin: durMins,
+      teachers:    splitList(get('teacher')),
+      groups:      splitList(get('group')),
+      rooms:       splitList(get('room')),
+      period:      get('period'),
+      weeks:       buildWeeks(get('inweek'), get('exweek'), get('realweeks')),
+      actType:     classifyType(subj),
+    });
+  }
+  return { lessons };
+}
+
+function buildWeeks(inweek, exweek, realweeks) {
+  if (realweeks && realweeks !== '0') return realweeks;
+  if (inweek && exweek) return `${inweek}–${exweek}`;
+  return inweek || '';
+}
+
+// ─── CSV/TSV parser ───────────────────────────────────────────────────────────
+const COL_ALIASES = {
+  subject:  ['subject','ämne','kurs','course','name'],
+  day:      ['day','dag','weekday'],
+  startTime:['starttime','start','starttid','begin'],
+  length:   ['length','duration','längd','min'],
+  teacher:  ['teacher','lärare','teachers'],
+  group:    ['group','klass','class','grupp'],
+  room:     ['room','sal','lokal'],
+  period:   ['period'],
+  weeks:    ['weeks','veckor','realweeks','inweek'],
+};
+
+function parseCSVTSV(text, delim) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const header = lines[0].split(delim).map(h => h.trim().toLowerCase());
+  const find = aliases => {
+    for (const a of aliases) {
+      const i = header.findIndex(h => h.includes(a));
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const idxMap = {};
+  for (const [k,aliases] of Object.entries(COL_ALIASES)) idxMap[k] = find(aliases);
+
+  const lessons = [];
+  for (let i = 1; i < lines.length; i++) {
+    const p = lines[i].split(delim);
+    const get = k => idxMap[k] >= 0 ? (p[idxMap[k]]||'').trim() : '';
+    const startMins = parseHHMM(get('startTime'));
+    const durMins   = parseInt(get('length')||0);
+    const dayRaw    = (get('day')||'').toLowerCase();
+    const day       = SWE_DAYS[dayRaw] || dayRaw || 'Mon';
+    const subj      = get('subject');
+    lessons.push({
+      id:          uid(),
+      subject:     subj,
+      day,
+      startTime:   hhmm(startMins),
+      endTime:     hhmm(startMins + durMins),
+      durationMin: durMins,
+      teachers:    splitList(get('teacher')),
+      groups:      splitList(get('group')),
+      rooms:       splitList(get('room')),
+      period:      get('period'),
+      weeks:       get('weeks'),
+      actType:     classifyType(subj),
+    });
+  }
+  return { lessons };
+}
+
+// ─── PDF parser (heuristic) ───────────────────────────────────────────────────
+async function parsePDF(file) {
+  if (typeof pdfjsLib === 'undefined') {
+    return { lessons:[], warn:'PDF.js not loaded — check internet connection' };
+  }
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let fullText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    fullText += tc.items.map(i => i.str).join(' ') + '\n';
+  }
+
+  // Try to detect embedded format
+  if (fullText.includes('Novaschem')) return parseSkola24(fullText);
+  if (/\bid\b.*\bsubject\b.*\bday\b/i.test(fullText)) return parseSchoolSoft(fullText);
+
+  // Heuristic: look for time + day patterns
+  const lessons = [];
+  const timeRe = /(\d{1,2}:\d{2})/g;
+  const dayRe  = /\b(Mon|Tue|Wed|Thu|Fri|Måndag|Tisdag|Onsdag|Torsdag|Fredag)\b/gi;
+  const lines  = fullText.split('\n');
+
+  for (const line of lines) {
+    const times = [...line.matchAll(timeRe)].map(m => m[1]);
+    const days  = [...line.matchAll(dayRe)].map(m => SWE_DAYS[m[1].toLowerCase()]||m[1]);
+    if (times.length >= 1 && days.length >= 1) {
+      const startMins = parseHHMM(times[0]);
+      const endMins   = times[1] ? parseHHMM(times[1]) : startMins + 60;
+      const parts     = line.replace(timeRe,'').replace(dayRe,'').trim().split(/\s{2,}/);
+      const subj      = parts[0] || '?';
+      lessons.push({
+        id:          uid(),
+        subject:     subj,
+        day:         days[0],
+        startTime:   hhmm(startMins),
+        endTime:     hhmm(endMins),
+        durationMin: endMins - startMins,
+        teachers:    parts.length > 1 ? [parts[1]] : [],
+        groups:      parts.length > 2 ? [parts[2]] : [],
+        rooms:       [],
+        period:      '',
+        weeks:       '',
+        actType:     classifyType(subj),
+      });
+    }
+  }
+  const warn = lessons.length === 0
+    ? 'Could not extract lessons from PDF — try exporting as .txt first'
+    : `PDF heuristic parse: ${lessons.length} lessons found. Results may be imprecise.`;
+  return { lessons, warn };
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function splitList(s) {
+  if (!s) return [];
+  return s.split(/[,;|]/).map(x => x.trim()).filter(Boolean);
+}
+
+// ─── File handling ────────────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  showStatus('loading', 'Reading file…');
+
+  try {
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      showStatus('loading', 'Extracting PDF text…', 'pdf');
+      const r = await parsePDF(file);
+      finish(r, 'pdf', file.name);
+    } else {
+      const text = await readText(file);
+      const fmt = detectFormat(text, file.name);
+      showStatus('loading', 'Parsing…', fmt);
+      let r;
+      if (fmt === 'skola24')    r = parseSkola24(text);
+      else if (fmt === 'schoolsoft') r = parseSchoolSoft(text);
+      else if (fmt === 'csv')   r = parseCSVTSV(text, ',');
+      else                      r = parseCSVTSV(text, '\t');
+      finish(r, fmt, file.name);
+    }
+  } catch(err) {
+    showStatus('error', 'Parse error: ' + err.message, 'error');
+  }
+}
+
+function readText(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = () => rej(new Error('File read error'));
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function finish(r, fmt, filename) {
+  allLessons = r.lessons || [];
+  if (r.warn) showWarning(r.warn);
+  showStatus('done', `Parsed ${filename}`, fmt, allLessons.length);
+  document.getElementById('resetBtn').style.display = 'block';
+  applyFilters();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function applyFilters() {
+  const exAdmin   = document.getElementById('excAdmin').checked;
+  const exBreak   = document.getElementById('excBreak').checked;
+  const exPassing = document.getElementById('excPassing').checked;
+  const exSupport = document.getElementById('excSupport').checked;
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+
+  filtered = allLessons.filter(l => {
+    if (exAdmin   && l.actType === 'admin')   return false;
+    if (exBreak   && l.actType === 'break')   return false;
+    if (exPassing && l.actType === 'passing') return false;
+    if (exSupport && l.actType === 'support') return false;
+    if (q) {
+      const blob = [l.subject, ...l.teachers, ...l.groups, ...l.rooms].join(' ').toLowerCase();
+      if (!blob.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // sort
+  filtered.sort((a,b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (Array.isArray(av)) av = av.join(',');
+    if (Array.isArray(bv)) bv = bv.join(',');
+    if (sortCol === 'day') { av = DAY_ORDER[av]??99; bv = DAY_ORDER[bv]??99; }
+    if (sortCol === 'startTime' || sortCol === 'endTime') { av = parseHHMM(av); bv = parseHHMM(bv); }
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  page = 1;
+  renderTable();
+  document.getElementById('controls').style.display = 'flex';
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  applyFilters();
+}
+
+// ─── Table render ─────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const start = (page-1)*PAGE_SIZE;
+  const slice = filtered.slice(start, start+PAGE_SIZE);
+
+  tbody.innerHTML = slice.map(l => `
+    <tr>
+      <td>${esc(l.subject)}</td>
+      <td class="day-${l.day}">${l.day}</td>
+      <td>${l.startTime}</td>
+      <td>${l.endTime}</td>
+      <td>${l.durationMin}</td>
+      <td>${l.teachers.map(esc).join(', ')}</td>
+      <td>${l.groups.map(esc).join(', ')}</td>
+      <td>${l.rooms.map(esc).join(', ')}</td>
+      <td>${esc(l.period)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="${esc(l.weeks)}">${esc(l.weeks)}</td>
+      <td class="type-${l.actType}">${l.actType}</td>
+    </tr>`).join('');
+
+  renderPagination();
+  document.getElementById('tableWrap').style.display = 'block';
+}
+
+function renderPagination() {
+  const total = filtered.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+
+  let btns = '';
+  const show = p => {
+    if (p < 1 || p > pages) return;
+    btns += `<button class="page-btn${p===page?' active':''}" onclick="goPage(${p})">${p}</button>`;
+  };
+  show(1);
+  if (page > 3) btns += '<span style="color:var(--muted);padding:0 4px">…</span>';
+  for (let p = Math.max(2,page-1); p <= Math.min(pages-1,page+1); p++) show(p);
+  if (page < pages-2) btns += '<span style="color:var(--muted);padding:0 4px">…</span>';
+  if (pages > 1) show(pages);
+
+  pg.innerHTML = `
+    <span>${total.toLocaleString()} lessons</span>
+    <div class="page-btns">
+      <button class="page-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>
+      ${btns}
+      <button class="page-btn" onclick="goPage(${page+1})" ${page===pages||pages===0?'disabled':''}>›</button>
+    </div>
+    <span>page ${page} / ${pages||1}</span>`;
+}
+
+function goPage(p) {
+  const pages = Math.ceil(filtered.length/PAGE_SIZE);
+  if (p < 1 || p > pages) return;
+  page = p;
+  renderTable();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Status ───────────────────────────────────────────────────────────────────
+function showStatus(state, msg, fmt, count) {
+  const bar = document.getElementById('statusBar');
+  bar.style.display = 'flex';
+  document.getElementById('spinnerEl').style.display = state==='loading' ? 'block' : 'none';
+  document.getElementById('statusMsg').textContent = msg;
+  document.getElementById('lessonCount').textContent = count ? `${count} lessons` : '';
+
+  const badge = document.getElementById('formatBadge');
+  if (fmt) {
+    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', error:'Error' };
+    badge.className = `badge badge-${fmt}`;
+    badge.textContent = labels[fmt]||fmt;
+  } else {
+    badge.textContent = '';
+  }
+}
+
+function showWarning(msg) {
+  const w = document.getElementById('warnings');
+  w.style.display = 'block';
+  w.innerHTML = '⚠ ' + esc(msg);
+}
+
+// ─── Copy TSV ─────────────────────────────────────────────────────────────────
+function copyTSV() {
+  const header = ['ID','Subject','Day','Start','End','Min','Teachers','Groups','Rooms','Period','Weeks','Type'];
+  const rows = [header, ...filtered.map(l => [
+    l.id, l.subject, l.day, l.startTime, l.endTime, l.durationMin,
+    l.teachers.join(';'), l.groups.join(';'), l.rooms.join(';'),
+    l.period, l.weeks, l.actType
+  ])];
+  navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n'))
+    .then(() => alert('TSV copied to clipboard! Paste into Google Sheets.'))
+    .catch(() => alert('Clipboard unavailable — try HTTPS'));
+}
+
+// ─── XLSX Export ──────────────────────────────────────────────────────────────
+function exportXLSX() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: All Lessons
+  const s1Data = [['ID','Subject','Day','Start','End','Duration (min)','Teachers','Groups','Rooms','Period','Weeks','Type']];
+  for (const l of filtered) {
+    s1Data.push([l.id, l.subject, l.day, l.startTime, l.endTime, l.durationMin,
+      l.teachers.join(', '), l.groups.join(', '), l.rooms.join(', '),
+      l.period, l.weeks, l.actType]);
+  }
+  const ws1 = XLSX.utils.aoa_to_sheet(s1Data);
+  styleSheet(ws1, s1Data.length);
+  XLSX.utils.book_append_sheet(wb, ws1, 'All Lessons');
+
+  // Sheet 2: By Teacher
+  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'teachers'), 'By Teacher');
+
+  // Sheet 3: By Class
+  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'groups'), 'By Class');
+
+  // Sheet 4: By Room
+  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'rooms'), 'By Room');
+
+  // Sheet 5: Summary
+  XLSX.utils.book_append_sheet(wb, buildSummarySheet(filtered), 'Summary');
+
+  XLSX.writeFile(wb, 'schedule_export.xlsx');
+}
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
+const SLOT_START = 7*60;   // 07:00
+const SLOT_END   = 18*60;  // 18:00
+const SLOT_SIZE  = 30;     // 30 min buckets
+
+function buildPivotSheet(lessons, entityKey) {
+  const slots = [];
+  for (let m = SLOT_START; m < SLOT_END; m += SLOT_SIZE) slots.push(hhmm(m));
+
+  // header row: Entity | Mon 07:00 | Mon 07:30 | …
+  const headers = ['Entity'];
+  for (const d of DAYS) for (const s of slots) headers.push(`${d} ${s}`);
+  const colIdx = (day, slot) => 1 + DAYS.indexOf(day)*slots.length + slots.indexOf(slot);
+
+  // collect entities
+  const entities = new Set();
+  for (const l of lessons) for (const e of l[entityKey]) if (e) entities.add(e);
+  const entityArr = [...entities].sort();
+
+  const grid = {};
+  for (const e of entityArr) {
+    grid[e] = new Array(headers.length).fill('');
+    grid[e][0] = e;
+  }
+
+  for (const l of lessons) {
+    if (!l.day || !DAYS.includes(l.day)) continue;
+    const startBucket = Math.floor(parseHHMM(l.startTime)/SLOT_SIZE)*SLOT_SIZE;
+    const endBucket   = Math.ceil(parseHHMM(l.endTime)/SLOT_SIZE)*SLOT_SIZE;
+    const label = entityKey === 'teachers'
+      ? `${l.subject} [${l.groups.join(',')}]`
+      : entityKey === 'groups'
+      ? `${l.subject} (${l.teachers.join(',')})`
+      : `${l.subject} ${l.groups.join(',')}/${l.teachers.join(',')}`;
+
+    for (const e of l[entityKey]) {
+      if (!grid[e]) continue;
+      for (let m = startBucket; m < endBucket; m += SLOT_SIZE) {
+        if (m < SLOT_START || m >= SLOT_END) continue;
+        const slot = hhmm(m);
+        const ci = colIdx(l.day, slot);
+        if (ci >= 0 && ci < headers.length) {
+          const cur = grid[e][ci];
+          grid[e][ci] = cur ? cur + ' / ' + label : label;
+        }
+      }
+    }
+  }
+
+  const aoa = [headers, ...entityArr.map(e => grid[e])];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  styleSheet(ws, aoa.length);
+  return ws;
+}
+
+function buildSummarySheet(lessons) {
+  const rows = [['Summary'], ['']];
+
+  // Lessons by subject
+  const bySubject = {};
+  for (const l of lessons) bySubject[l.subject] = (bySubject[l.subject]||0) + 1;
+  rows.push(['Lessons by Subject','Count']);
+  for (const [k,v] of Object.entries(bySubject).sort((a,b)=>b[1]-a[1]))
+    rows.push([k, v]);
+
+  rows.push(['']);
+
+  // Teaching hours by teacher
+  const byTeacher = {};
+  for (const l of lessons.filter(x=>x.actType==='teaching')) {
+    for (const t of l.teachers) {
+      byTeacher[t] = (byTeacher[t]||0) + l.durationMin;
+    }
+  }
+  rows.push(['Teaching Hours by Teacher','Minutes','Hours']);
+  for (const [k,v] of Object.entries(byTeacher).sort((a,b)=>b[1]-a[1]))
+    rows.push([k, v, +(v/60).toFixed(1)]);
+
+  rows.push(['']);
+
+  // By type
+  const byType = {};
+  for (const l of lessons) byType[l.actType] = (byType[l.actType]||0) + 1;
+  rows.push(['Lessons by Type','Count']);
+  for (const [k,v] of Object.entries(byType)) rows.push([k,v]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  styleSheet(ws, rows.length);
+  return ws;
+}
+
+function styleSheet(ws, rowCount) {
+  const headerStyle = {
+    font: { bold: true, name: 'Arial', sz: 10 },
+    fill: { fgColor: { rgb: '1C271C' }, patternType: 'solid' },
+    alignment: { horizontal: 'center' }
+  };
+  const range = XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
+    if (cell) cell.s = headerStyle;
+  }
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+function resetApp() {
+  allLessons = []; filtered = []; _uid = 0;
+  document.getElementById('statusBar').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('warnings').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('fileInput').value = '';
+}
+</script>
+</body>
+</html>
