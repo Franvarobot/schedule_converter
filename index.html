@@ -338,8 +338,8 @@ function setProvider(p) {
 function resolveProvider() {
   const hasAnt = !!getAnthropicKey();
   const hasGem = !!getGeminiKey();
-  if (imageProvider === 'anthropic') return hasAnt ? 'anthropic' : null;
-  if (imageProvider === 'gemini')    return hasGem ? 'gemini'    : null;
+  if (imageProvider === 'anthropic') return 'anthropic'; // key checked in caller
+  if (imageProvider === 'gemini')    return 'gemini';    // key checked in caller
   // auto
   if (hasAnt) return 'anthropic';
   if (hasGem) return 'gemini';
@@ -455,7 +455,7 @@ async function parseImageGemini(file) {
   const mediaType = file.type || 'image/jpeg';
 
   const resp = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
