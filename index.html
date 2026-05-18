@@ -7,161 +7,210 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0d0f0e; --surface: #141714; --surface2: #1c1f1c;
-    --border: #2a2e2a; --accent: #b8f0a0; --accent2: #7dd4fc;
-    --accent3: #f59e0b; --text: #e8ede8; --muted: #6b756b; --danger: #f87171;
-    --gemini: #4285f4;
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0eeea;
+    --border: #d8d4cc;
+    --border-strong: #b0a898;
+    --accent: #1a6b3a;
+    --accent-light: #e8f5ee;
+    --accent2: #1a55a0;
+    --accent2-light: #e8eefc;
+    --accent3: #a05c00;
+    --accent3-light: #fef3e2;
+    --gemini: #1a55a0;
+    --text: #1a1a18;
+    --text2: #4a4840;
+    --muted: #8a8478;
+    --danger: #c0392b;
+    --danger-light: #fdf0ee;
+    --purple: #5b2d8e;
+    --purple-light: #f3eefb;
   }
-  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
-  header { padding: 2rem 3rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 1.5rem; }
-  header h1 { font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 300; color: var(--accent); letter-spacing: -0.02em; }
-  header span { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
-  main { max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem; }
+  body { font-family: 'IBM Plex Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    padding: 1.5rem 3rem;
+    background: var(--surface);
+    border-bottom: 2px solid var(--text);
+    display: flex; align-items: baseline; gap: 1.5rem;
+  }
+  header h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: var(--text); letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--accent); }
+  header .subtitle { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  main { max-width: 1400px; margin: 0 auto; padding: 2rem 3rem; }
 
   /* API key bar */
   #apiKeyBar {
-    margin-bottom: 1.5rem; padding: 0.9rem 1rem;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-    font-size: 0.72rem;
+    margin-bottom: 1.5rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.72rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  .api-bar-title { color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.65rem; }
-  .api-key-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+  .api-bar-title {
+    color: var(--muted); margin-bottom: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.63rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .api-bar-title::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .api-key-rows { display: flex; flex-direction: column; gap: 0.6rem; }
   .api-key-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-  .api-key-row label { color: var(--muted); white-space: nowrap; min-width: 110px; font-size: 0.72rem; }
-  .api-key-row label span { font-size: 0.65rem; opacity: 0.6; }
+  .api-key-row label { color: var(--text2); white-space: nowrap; min-width: 110px; font-size: 0.72rem; font-weight: 500; }
+  .api-key-row label span { font-size: 0.62rem; color: var(--muted); font-weight: 400; }
   .api-key-row input {
     flex: 1; min-width: 260px;
     background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.72rem;
-    padding: 0.35rem 0.75rem; border-radius: 2px; outline: none; transition: border-color 0.15s;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+    padding: 0.4rem 0.75rem; border-radius: 4px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .api-key-row input:focus { border-color: var(--accent2); }
+  .api-key-row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(26,85,160,0.12); }
   .api-key-row input::placeholder { color: var(--muted); }
-  .api-key-row input.gemini:focus { border-color: var(--gemini); }
-  .api-hint { color: var(--muted); font-size: 0.65rem; }
-  .api-hint a { color: var(--accent2); }
-  .api-hint a.gemini-link { color: var(--gemini); }
+  .api-key-row input.gemini:focus { border-color: var(--gemini); box-shadow: 0 0 0 3px rgba(26,85,160,0.12); }
+  .api-hint { color: var(--muted); font-size: 0.63rem; }
+  .api-hint a { color: var(--accent2); text-decoration: none; }
+  .api-hint a:hover { text-decoration: underline; }
 
   /* Provider selector */
-  .provider-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
-  .provider-row label { color: var(--muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .provider-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .provider-row label { color: var(--muted); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.1em; }
   .provider-btn {
-    font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 0.25rem 0.75rem;
-    border-radius: 2px; border: 1px solid var(--border); background: transparent;
-    color: var(--muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.06em;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; padding: 0.25rem 0.8rem;
+    border-radius: 4px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text2); cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em;
   }
-  .provider-btn:hover { border-color: var(--text); color: var(--text); }
-  .provider-btn.active-anthropic { border-color: var(--accent2); color: var(--accent2); background: rgba(125,212,252,0.08); }
-  .provider-btn.active-gemini    { border-color: var(--gemini);  color: var(--gemini);  background: rgba(66,133,244,0.08); }
-  .provider-btn.active-auto      { border-color: var(--accent);  color: var(--accent);  background: rgba(184,240,160,0.08); }
-  .provider-note { font-size: 0.63rem; color: var(--muted); margin-left: 0.5rem; }
+  .provider-btn:hover { border-color: var(--border-strong); background: var(--surface2); color: var(--text); }
+  .provider-btn.active-anthropic { border-color: var(--accent); color: var(--accent); background: var(--accent-light); font-weight: 500; }
+  .provider-btn.active-gemini    { border-color: var(--gemini); color: var(--gemini); background: var(--accent2-light); font-weight: 500; }
+  .provider-btn.active-auto      { border-color: var(--text); color: var(--text); background: var(--surface2); font-weight: 500; }
+  .provider-note { font-size: 0.62rem; color: var(--muted); margin-left: 0.25rem; }
 
   /* Drop Zone */
   #dropzone {
-    border: 1px dashed var(--border); border-radius: 4px; padding: 4rem 2rem;
+    border: 2px dashed var(--border-strong); border-radius: 6px; padding: 3.5rem 2rem;
     text-align: center; cursor: pointer; transition: all 0.2s;
     background: var(--surface); position: relative; overflow: hidden;
   }
   #dropzone::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(184,240,160,0.04) 0%, transparent 70%);
+    background: radial-gradient(circle at 50% 0%, rgba(26,107,58,0.03) 0%, transparent 70%);
     pointer-events: none;
   }
-  #dropzone:hover, #dropzone.drag-over { border-color: var(--accent); background: var(--surface2); }
-  #dropzone.drag-over { border-style: solid; }
-  .drop-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.4; }
-  #dropzone p { color: var(--muted); font-size: 0.8rem; line-height: 1.8; }
-  #dropzone strong { color: var(--text); font-weight: 500; }
+  #dropzone:hover, #dropzone.drag-over {
+    border-color: var(--accent); background: var(--accent-light);
+    border-style: solid;
+  }
+  .drop-icon { font-size: 2.2rem; margin-bottom: 0.85rem; opacity: 0.35; }
+  #dropzone p { color: var(--text2); font-size: 0.82rem; line-height: 1.9; }
+  #dropzone strong { color: var(--text); font-weight: 600; }
   #fileInput { display: none; }
-  .formats-hint { margin-top: 1rem; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; }
+  .formats-hint { margin-top: 0.85rem; font-size: 0.63rem; color: var(--muted); letter-spacing: 0.06em; }
 
   /* Status bar */
   #statusBar {
-    display: none; margin-top: 1.5rem; padding: 1rem 1.5rem;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    display: none; margin-top: 1.25rem; padding: 0.85rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
     font-size: 0.78rem; gap: 1rem; align-items: center; flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .badge {
     display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.25rem 0.75rem; border-radius: 2px;
-    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+    padding: 0.2rem 0.7rem; border-radius: 4px;
+    font-size: 0.65rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 600;
   }
-  .badge-skola24   { background: rgba(184,240,160,0.12); color: var(--accent);  border: 1px solid rgba(184,240,160,0.2); }
-  .badge-schoolsoft{ background: rgba(125,212,252,0.12); color: var(--accent2); border: 1px solid rgba(125,212,252,0.2); }
-  .badge-pdf       { background: rgba(245,158,11,0.12);  color: var(--accent3); border: 1px solid rgba(245,158,11,0.2); }
-  .badge-csv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
-  .badge-tsv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
-  .badge-image     { background: rgba(192,132,252,0.12); color: #c084fc;        border: 1px solid rgba(192,132,252,0.2); }
-  .badge-gemini    { background: rgba(66,133,244,0.12);  color: var(--gemini);  border: 1px solid rgba(66,133,244,0.2); }
-  .badge-error     { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.2); }
+  .badge-skola24   { background: var(--accent-light);   color: var(--accent);  border: 1px solid rgba(26,107,58,0.25); }
+  .badge-schoolsoft{ background: var(--accent2-light);  color: var(--accent2); border: 1px solid rgba(26,85,160,0.25); }
+  .badge-pdf       { background: var(--accent3-light);  color: var(--accent3); border: 1px solid rgba(160,92,0,0.25); }
+  .badge-csv       { background: var(--surface2);       color: var(--text2);   border: 1px solid var(--border); }
+  .badge-tsv       { background: var(--surface2);       color: var(--text2);   border: 1px solid var(--border); }
+  .badge-image     { background: var(--purple-light);   color: var(--purple);  border: 1px solid rgba(91,45,142,0.25); }
+  .badge-gemini    { background: var(--accent2-light);  color: var(--gemini);  border: 1px solid rgba(26,85,160,0.25); }
+  .badge-error     { background: var(--danger-light);   color: var(--danger);  border: 1px solid rgba(192,57,43,0.25); }
   .spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #statusMsg { color: var(--muted); }
-  #lessonCount { color: var(--accent); font-weight: 500; }
+  #statusMsg { color: var(--text2); }
+  #lessonCount { color: var(--accent); font-weight: 600; }
 
   /* Controls */
-  #controls { display:none; margin-top:1.5rem; gap:1.5rem; flex-wrap:wrap; align-items:center; }
-  .filter-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
-  .filter-group label { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-right:0.25rem; }
-  .cb-label { display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.75rem; color:var(--text); padding:0.3rem 0.6rem; border:1px solid var(--border); border-radius:2px; transition:all 0.15s; user-select:none; }
-  .cb-label:hover { border-color:var(--accent); }
+  #controls { display:none; margin-top:1.25rem; gap:1rem; flex-wrap:wrap; align-items:center; }
+  .filter-group { display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center; }
+  .filter-group > label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-right:0.25rem; }
+  .cb-label {
+    display:flex; align-items:center; gap:0.4rem; cursor:pointer;
+    font-size:0.72rem; color:var(--text2); padding:0.28rem 0.65rem;
+    border:1px solid var(--border); border-radius:4px;
+    transition:all 0.15s; user-select:none; background: var(--surface);
+  }
+  .cb-label:hover { border-color:var(--accent); color:var(--accent); background: var(--accent-light); }
   .cb-label input { accent-color:var(--accent); }
-  .search-input { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:2px; outline:none; width:200px; transition:border-color 0.15s; }
-  .search-input:focus { border-color:var(--accent2); }
+  .search-input {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    font-family:'IBM Plex Mono',monospace; font-size:0.72rem;
+    padding:0.35rem 0.75rem; border-radius:4px; outline:none; width:220px; transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-input:focus { border-color:var(--accent2); box-shadow: 0 0 0 3px rgba(26,85,160,0.1); }
   .search-input::placeholder { color:var(--muted); }
-  .btn-group { display:flex; gap:0.75rem; margin-left:auto; }
-  .btn { font-family:'DM Mono',monospace; font-size:0.75rem; padding:0.5rem 1.25rem; border-radius:2px; border:1px solid; cursor:pointer; letter-spacing:0.06em; transition:all 0.15s; display:flex; align-items:center; gap:0.5rem; }
-  .btn-primary { background:var(--accent); color:#0a0f0a; border-color:var(--accent); font-weight:500; }
-  .btn-primary:hover { background:#d4f7bc; }
-  .btn-ghost { background:transparent; color:var(--muted); border-color:var(--border); font-size:0.7rem; }
-  .btn-ghost:hover { color:var(--text); border-color:var(--muted); }
+  .btn-group { display:flex; gap:0.6rem; margin-left:auto; }
+  .btn { font-family:'IBM Plex Mono',monospace; font-size:0.72rem; padding:0.45rem 1.1rem; border-radius:4px; border:1px solid; cursor:pointer; letter-spacing:0.04em; transition:all 0.15s; display:flex; align-items:center; gap:0.5rem; }
+  .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:500; }
+  .btn-primary:hover { background:#155c30; border-color:#155c30; }
+  .btn-ghost { background:var(--surface); color:var(--text2); border-color:var(--border); }
+  .btn-ghost:hover { border-color:var(--border-strong); color:var(--text); background: var(--surface2); }
 
   /* Table */
-  #tableWrap { display:none; margin-top:1.5rem; border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  #tableWrap { display:none; margin-top:1.25rem; border:1px solid var(--border); border-radius:6px; overflow:hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
   .table-scroll { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:0.73rem; }
-  thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
-  th { padding:0.6rem 0.9rem; text-align:left; color:var(--muted); font-weight:400; letter-spacing:0.08em; text-transform:uppercase; font-size:0.65rem; white-space:nowrap; cursor:pointer; user-select:none; }
+  table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+  thead tr { background:var(--surface2); border-bottom:2px solid var(--border); }
+  th { padding:0.65rem 0.9rem; text-align:left; color:var(--muted); font-weight:500; letter-spacing:0.07em; text-transform:uppercase; font-size:0.62rem; white-space:nowrap; cursor:pointer; user-select:none; }
   th:hover { color:var(--text); }
-  td { padding:0.5rem 0.9rem; border-bottom:1px solid rgba(42,46,42,0.6); white-space:nowrap; color:var(--text); }
+  td { padding:0.5rem 0.9rem; border-bottom:1px solid var(--border); white-space:nowrap; color:var(--text); }
   tr:last-child td { border-bottom:none; }
-  tbody tr:hover td { background:rgba(184,240,160,0.03); }
-  .type-teaching { color:var(--accent); } .type-admin { color:var(--accent2); }
-  .type-break { color:var(--muted); } .type-passing { color:var(--muted); font-style:italic; }
-  .type-support { color:var(--accent3); }
-  .day-Mon { color:#c084fc; } .day-Tue { color:#60a5fa; } .day-Wed { color:var(--accent); }
-  .day-Thu { color:var(--accent3); } .day-Fri { color:#f472b6; }
+  tbody tr:hover td { background: #fafaf8; }
+  .type-teaching { color:var(--accent); font-weight:500; }
+  .type-admin    { color:var(--accent2); }
+  .type-break    { color:var(--muted); }
+  .type-passing  { color:var(--muted); font-style:italic; }
+  .type-support  { color:var(--accent3); }
+  .day-Mon { color:var(--purple); font-weight:500; }
+  .day-Tue { color:var(--accent2); font-weight:500; }
+  .day-Wed { color:var(--accent); font-weight:500; }
+  .day-Thu { color:var(--accent3); font-weight:500; }
+  .day-Fri { color:#b0306a; font-weight:500; }
 
   /* Pagination */
-  #pagination { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-top:1px solid var(--border); background:var(--surface); font-size:0.72rem; color:var(--muted); }
-  .page-btns { display:flex; gap:0.5rem; }
-  .page-btn { padding:0.25rem 0.65rem; border:1px solid var(--border); border-radius:2px; background:transparent; color:var(--text); cursor:pointer; font-family:'DM Mono',monospace; font-size:0.7rem; transition:all 0.12s; }
+  #pagination { display:flex; align-items:center; justify-content:space-between; padding:0.65rem 1.25rem; border-top:1px solid var(--border); background:var(--surface2); font-size:0.7rem; color:var(--muted); }
+  .page-btns { display:flex; gap:0.35rem; }
+  .page-btn { padding:0.22rem 0.6rem; border:1px solid var(--border); border-radius:3px; background:var(--surface); color:var(--text2); cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; transition:all 0.12s; }
   .page-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .page-btn.active { background:var(--accent); color:#0a0f0a; border-color:var(--accent); }
-  .page-btn:disabled { opacity:0.3; cursor:not-allowed; }
+  .page-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .page-btn:disabled { opacity:0.35; cursor:not-allowed; }
 
   /* Warnings */
-  #warnings { display:none; margin-top:1rem; padding:0.75rem 1rem; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:4px; font-size:0.72rem; color:var(--accent3); line-height:1.7; }
+  #warnings { display:none; margin-top:1rem; padding:0.75rem 1rem; background:var(--accent3-light); border:1px solid rgba(160,92,0,0.3); border-radius:6px; font-size:0.72rem; color:var(--accent3); line-height:1.7; }
 
   /* Reset */
-  #resetBtn { display:none; background:none; border:none; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.72rem; cursor:pointer; text-decoration:underline; margin-left:auto; }
+  #resetBtn { display:none; background:none; border:none; color:var(--muted); font-family:'IBM Plex Mono',monospace; font-size:0.7rem; cursor:pointer; text-decoration:underline; margin-left:auto; }
   #resetBtn:hover { color:var(--danger); }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Schedule Converter</h1>
-  <span>Skola24 · SchoolSoft · PDF · CSV · Screenshot</span>
-  <button id="resetBtn" onclick="resetApp()">reset</button>
+  <h1>Schedule<span>.</span>Converter</h1>
+  <span class="subtitle">Skola24 · SchoolSoft · PDF · CSV · Screenshot</span>
+  <button id="resetBtn" onclick="resetApp()">↺ reset</button>
 </header>
 
 <main>
   <div id="apiKeyBar">
-    <div class="api-bar-title">API Keys <em style="opacity:.5;text-transform:none;letter-spacing:0">(only needed for image / screenshot parsing)</em></div>
+    <div class="api-bar-title">API Keys &nbsp;<em style="text-transform:none;letter-spacing:0;font-style:normal;opacity:.7">— only needed for image / screenshot parsing</em></div>
     <div class="api-key-rows">
       <div class="api-key-row">
         <label>Anthropic <span>(Claude)</span></label>
@@ -173,7 +222,7 @@
         <label>Google <span>(Gemini)</span></label>
         <input id="geminiKeyInput" type="password" class="gemini" placeholder="AIza…"
                oninput="saveKeys()" autocomplete="off">
-        <span class="api-hint">Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="gemini-link">aistudio.google.com</a></span>
+        <span class="api-hint">Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></span>
       </div>
     </div>
     <div class="provider-row">
@@ -217,7 +266,7 @@
            oninput="applyFilters()">
     <div class="btn-group">
       <button class="btn btn-ghost" onclick="copyTSV()">Copy TSV</button>
-      <button class="btn btn-primary" onclick="exportXLSX()">Download .xlsx</button>
+      <button class="btn btn-primary" onclick="exportXLSX()">↓ Download .xlsx</button>
     </div>
   </div>
 
@@ -247,33 +296,24 @@
 </main>
 
 <script>
-// PDF.js worker
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// State
-let allLessons = [];
-let filtered = [];
-let sortCol = 'day';
-let sortDir = 1;
-let page = 1;
+let allLessons = [], filtered = [], sortCol = 'day', sortDir = 1, page = 1;
 const PAGE_SIZE = 50;
-let imageProvider = 'auto'; // 'auto' | 'anthropic' | 'gemini'
+let imageProvider = 'auto';
 
-// Day maps
 const SWE_DAYS = {
   'mandag':'Mon','måndag':'Mon','mon':'Mon','1':'Mon','monday':'Mon',
   'tisdag':'Tue','tue':'Tue','2':'Tue','tuesday':'Tue',
   'onsdag':'Wed','wed':'Wed','3':'Wed','wednesday':'Wed',
   'torsdag':'Thu','thu':'Thu','4':'Thu','thursday':'Thu',
-  'fredag':'Fri','fri':'Fri','5':'Fri','friday':'Fri',
-  'sat':'Fri'
+  'fredag':'Fri','fri':'Fri','5':'Fri','friday':'Fri','sat':'Fri'
 };
 const DAY_ORDER = { Mon:0, Tue:1, Wed:2, Thu:3, Fri:4 };
 
-// Activity classifier
 const ADMIN_KWORDS   = ['arbetstid','planning time','department meeting','apt','arbetslagsmote','faculty','konferens','development'];
 const BREAK_KWORDS   = ['rast','break','lunch','fika'];
 const PASSING_KWORDS = ['passing time','changing time','raststod'];
@@ -288,594 +328,330 @@ function classifyType(subject) {
   return 'teaching';
 }
 
-function hhmm(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-}
+function hhmm(m) { return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 function parseHHMM(str) {
-  if (!str) return 0;
-  str = String(str).trim();
-  if (/^\d{3,4}$/.test(str)) { const n = parseInt(str); return Math.floor(n/100)*60 + (n%100); }
-  const parts = str.split(':');
-  return parseInt(parts[0]||0)*60 + parseInt(parts[1]||0);
+  if (!str) return 0; str = String(str).trim();
+  if (/^\d{3,4}$/.test(str)) { const n=parseInt(str); return Math.floor(n/100)*60+(n%100); }
+  const p=str.split(':'); return parseInt(p[0]||0)*60+parseInt(p[1]||0);
 }
 let _uid = 0;
 function uid() { return String(++_uid); }
 
-// Key management
 function saveKeys() {
-  const ant = document.getElementById('anthropicKeyInput').value.trim();
-  const gem = document.getElementById('geminiKeyInput').value.trim();
-  if (ant) sessionStorage.setItem('sc_anthropic_key', ant); else sessionStorage.removeItem('sc_anthropic_key');
-  if (gem) sessionStorage.setItem('sc_gemini_key', gem);    else sessionStorage.removeItem('sc_gemini_key');
+  const ant=document.getElementById('anthropicKeyInput').value.trim();
+  const gem=document.getElementById('geminiKeyInput').value.trim();
+  if (ant) sessionStorage.setItem('sc_anthropic_key',ant); else sessionStorage.removeItem('sc_anthropic_key');
+  if (gem) sessionStorage.setItem('sc_gemini_key',gem);    else sessionStorage.removeItem('sc_gemini_key');
 }
-function getAnthropicKey() { return sessionStorage.getItem('sc_anthropic_key') || document.getElementById('anthropicKeyInput').value.trim(); }
-function getGeminiKey()    { return sessionStorage.getItem('sc_gemini_key')    || document.getElementById('geminiKeyInput').value.trim(); }
+function getAnthropicKey() { return sessionStorage.getItem('sc_anthropic_key')||document.getElementById('anthropicKeyInput').value.trim(); }
+function getGeminiKey()    { return sessionStorage.getItem('sc_gemini_key')   ||document.getElementById('geminiKeyInput').value.trim(); }
 
 window.addEventListener('load', () => {
-  const ant = sessionStorage.getItem('sc_anthropic_key');
-  const gem = sessionStorage.getItem('sc_gemini_key');
-  if (ant) document.getElementById('anthropicKeyInput').value = ant;
-  if (gem) document.getElementById('geminiKeyInput').value = gem;
+  const ant=sessionStorage.getItem('sc_anthropic_key');
+  const gem=sessionStorage.getItem('sc_gemini_key');
+  if (ant) document.getElementById('anthropicKeyInput').value=ant;
+  if (gem) document.getElementById('geminiKeyInput').value=gem;
 });
 
-// Provider selector
 function setProvider(p) {
   imageProvider = p;
-  document.getElementById('btnAuto').className      = 'provider-btn' + (p==='auto'      ? ' active-auto'      : '');
-  document.getElementById('btnAnthropic').className = 'provider-btn' + (p==='anthropic' ? ' active-anthropic' : '');
-  document.getElementById('btnGemini').className    = 'provider-btn' + (p==='gemini'    ? ' active-gemini'    : '');
-  const notes = {
-    auto:      'uses whichever key is set; prefers Anthropic',
-    anthropic: 'always use Claude Vision (Anthropic key required)',
-    gemini:    'always use Gemini Vision (Google key required)',
-  };
+  document.getElementById('btnAuto').className      = 'provider-btn'+(p==='auto'      ?' active-auto':'');
+  document.getElementById('btnAnthropic').className = 'provider-btn'+(p==='anthropic' ?' active-anthropic':'');
+  document.getElementById('btnGemini').className    = 'provider-btn'+(p==='gemini'    ?' active-gemini':'');
+  const notes = { auto:'uses whichever key is set; prefers Anthropic', anthropic:'always use Claude Vision (Anthropic key required)', gemini:'always use Gemini Vision (Google key required)' };
   document.getElementById('providerNote').textContent = notes[p];
 }
 
-// Resolve which provider to actually use
 function resolveProvider() {
-  const hasAnt = !!getAnthropicKey();
-  const hasGem = !!getGeminiKey();
-  if (imageProvider === 'anthropic') return 'anthropic'; // key checked in caller
-  if (imageProvider === 'gemini')    return 'gemini';    // key checked in caller
-  // auto
-  if (hasAnt) return 'anthropic';
-  if (hasGem) return 'gemini';
+  if (imageProvider === 'anthropic') return 'anthropic';
+  if (imageProvider === 'gemini')    return 'gemini';
+  if (getAnthropicKey()) return 'anthropic';
+  if (getGeminiKey())    return 'gemini';
   return null;
 }
 
-// Shared prompt
 const IMAGE_PROMPT = `You are parsing a school schedule image. Extract every lesson/activity you can see into a JSON array.
-
 Return ONLY valid JSON — no explanation, no markdown fences, just the raw JSON array.
-
 Each lesson object must have these fields (use empty string or empty array if unknown):
-{
-  "subject": "subject or activity name",
-  "day": "Mon|Tue|Wed|Thu|Fri",
-  "startTime": "HH:MM",
-  "endTime": "HH:MM",
-  "durationMin": number,
-  "teachers": ["Teacher Name"],
-  "groups": ["Class or Group Name"],
-  "rooms": ["Room"],
-  "period": "",
-  "weeks": ""
-}
-
-Rules:
-- day must be one of: Mon, Tue, Wed, Thu, Fri
-- startTime and endTime must be HH:MM format (24h)
-- If duration is not shown, estimate from context or use 60
-- Include ALL activities visible: lessons, breaks, lunch, admin time etc
-- If a cell shows teacher name, put it in teachers array
-- If a cell shows class/group name, put it in groups array
-
-Return the JSON array now:`;
+{"subject":"subject or activity name","day":"Mon|Tue|Wed|Thu|Fri","startTime":"HH:MM","endTime":"HH:MM","durationMin":number,"teachers":["Teacher Name"],"groups":["Class or Group Name"],"rooms":["Room"],"period":"","weeks":""}
+Rules: day must be one of Mon Tue Wed Thu Fri. startTime and endTime must be HH:MM (24h). If duration not shown use 60. Include ALL activities. Return the JSON array now:`;
 
 function normaliseLessons(parsed) {
   if (!Array.isArray(parsed)) return [];
   return parsed.map(l => ({
-    id:          uid(),
-    subject:     l.subject || '',
-    day:         SWE_DAYS[(l.day||'').toLowerCase()] || l.day || 'Mon',
-    startTime:   l.startTime || '00:00',
-    endTime:     l.endTime || '00:00',
-    durationMin: l.durationMin || 0,
-    teachers:    Array.isArray(l.teachers) ? l.teachers : splitList(l.teachers||''),
-    groups:      Array.isArray(l.groups)   ? l.groups   : splitList(l.groups||''),
-    rooms:       Array.isArray(l.rooms)    ? l.rooms    : splitList(l.rooms||''),
-    period:      l.period || '',
-    weeks:       l.weeks || '',
-    actType:     classifyType(l.subject || ''),
-  })).filter(l => l.subject || l.startTime !== '00:00');
+    id:uid(), subject:l.subject||'', day:SWE_DAYS[(l.day||'').toLowerCase()]||l.day||'Mon',
+    startTime:l.startTime||'00:00', endTime:l.endTime||'00:00', durationMin:l.durationMin||0,
+    teachers:Array.isArray(l.teachers)?l.teachers:splitList(l.teachers||''),
+    groups:Array.isArray(l.groups)?l.groups:splitList(l.groups||''),
+    rooms:Array.isArray(l.rooms)?l.rooms:splitList(l.rooms||''),
+    period:l.period||'', weeks:l.weeks||'', actType:classifyType(l.subject||''),
+  })).filter(l => l.subject||l.startTime!=='00:00');
 }
 
 function parseJsonResponse(raw) {
-  const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-  try { return JSON.parse(clean); }
-  catch(e) {
-    const match = clean.match(/\[[\s\S]*\]/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error('Unparseable JSON response');
+  const clean=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  try { return JSON.parse(clean); } catch(e) {
+    const m=clean.match(/\[[\s\S]*\]/); if (m) return JSON.parse(m[0]);
+    throw new Error('Unparseable JSON');
   }
 }
 
-// Anthropic image parser
 async function parseImageAnthropic(file) {
-  const apiKey = getAnthropicKey();
+  const apiKey=getAnthropicKey();
   if (!apiKey) return { lessons:[], warn:'No Anthropic API key set.' };
-
-  showStatus('loading', 'Sending to Claude Vision...', 'image');
-  const base64 = await fileToBase64(file);
-  const mediaType = file.type || 'image/jpeg';
-
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      messages: [{ role:'user', content:[
-        { type:'image', source:{ type:'base64', media_type:mediaType, data:base64 } },
-        { type:'text', text:IMAGE_PROMPT }
-      ]}]
-    })
+  showStatus('loading','Sending to Claude Vision...','image');
+  const base64=await fileToBase64(file); const mediaType=file.type||'image/jpeg';
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST', headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:IMAGE_PROMPT}]}]})
   });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    const msg = err.error?.message || resp.statusText;
-    if (resp.status === 401) return { lessons:[], warn:'Invalid Anthropic API key.' };
-    return { lessons:[], warn:'Anthropic API error: ' + msg };
-  }
-
-  const data = await resp.json();
-  const raw = (data.content||[]).filter(b => b.type==='text').map(b => b.text).join('');
-  const parsed = parseJsonResponse(raw);
-  const lessons = normaliseLessons(parsed);
-  const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted — check results.' : null;
-  return { lessons, warn, badge:'image' };
+  if (!resp.ok) { const err=await resp.json().catch(()=>({})); const msg=err.error?.message||resp.statusText; if(resp.status===401) return{lessons:[],warn:'Invalid Anthropic API key.'}; return{lessons:[],warn:'Anthropic API error: '+msg}; }
+  const data=await resp.json();
+  const raw=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  const lessons=normaliseLessons(parseJsonResponse(raw));
+  return{lessons,warn:lessons.length<3?'Only '+lessons.length+' lessons extracted — check results.':null,badge:'image'};
 }
 
-// Gemini image parser
 async function parseImageGemini(file) {
-  const apiKey = getGeminiKey();
+  const apiKey=getGeminiKey();
   if (!apiKey) return { lessons:[], warn:'No Google Gemini API key set.' };
-
-  showStatus('loading', 'Sending to Gemini Vision...', 'gemini');
-  const base64 = await fileToBase64(file);
-  const mediaType = file.type || 'image/jpeg';
-
-  const resp = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { inline_data: { mime_type: mediaType, data: base64 } },
-          { text: IMAGE_PROMPT }
-        ]}],
-        generationConfig: { temperature: 0, maxOutputTokens: 4096 }
-      })
-    }
-  );
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    const msg = err.error?.message || resp.statusText;
-    if (resp.status === 400 || resp.status === 403) return { lessons:[], warn:'Invalid Gemini API key or quota exceeded: ' + msg };
-    return { lessons:[], warn:'Gemini API error: ' + msg };
-  }
-
-  const data = await resp.json();
-  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!raw) return { lessons:[], warn:'Gemini returned an empty response.' };
-
-  const parsed = parseJsonResponse(raw);
-  const lessons = normaliseLessons(parsed);
-  const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted — check results.' : null;
-  return { lessons, warn, badge:'gemini' };
+  showStatus('loading','Sending to Gemini Vision...','gemini');
+  const base64=await fileToBase64(file); const mediaType=file.type||'image/jpeg';
+  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+apiKey,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:mediaType,data:base64}},{text:IMAGE_PROMPT}]}],generationConfig:{temperature:0,maxOutputTokens:4096}})
+  });
+  if (!resp.ok) { const err=await resp.json().catch(()=>({})); const msg=err.error?.message||resp.statusText; if(resp.status===400||resp.status===403) return{lessons:[],warn:'Invalid Gemini key or quota exceeded: '+msg}; return{lessons:[],warn:'Gemini API error: '+msg}; }
+  const data=await resp.json();
+  const raw=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  if (!raw) return{lessons:[],warn:'Gemini returned empty response.'};
+  const lessons=normaliseLessons(parseJsonResponse(raw));
+  return{lessons,warn:lessons.length<3?'Only '+lessons.length+' lessons extracted — check results.':null,badge:'gemini'};
 }
 
-// Main image dispatcher
 async function parseImage(file) {
-  const provider = resolveProvider();
-  if (!provider) {
-    return { lessons:[], warn:'No API key set. Enter an Anthropic or Gemini key above to parse screenshots.' };
-  }
-  try {
-    if (provider === 'gemini') return await parseImageGemini(file);
-    return await parseImageAnthropic(file);
-  } catch(err) {
-    return { lessons:[], warn:'Network error calling AI API: ' + err.message };
-  }
+  const provider=resolveProvider();
+  if (!provider) return{lessons:[],warn:'No API key set. Enter an Anthropic or Gemini key above to parse screenshots.'};
+  try { return provider==='gemini'?await parseImageGemini(file):await parseImageAnthropic(file); }
+  catch(err) { return{lessons:[],warn:'Network error: '+err.message}; }
 }
 
 function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result.split(',')[1]);
-    reader.onerror = () => rej(new Error('File read error'));
-    reader.readAsDataURL(file);
-  });
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.onerror=()=>rej(new Error('File read error')); r.readAsDataURL(file); });
 }
+function splitList(s) { if(!s) return []; return String(s).split(/[,;|]/).map(x=>x.trim()).filter(Boolean); }
 
-function splitList(s) {
-  if (!s) return [];
-  return String(s).split(/[,;|]/).map(x => x.trim()).filter(Boolean);
-}
-
-// Format detection
 function detectFormat(text, filename) {
-  const fn = (filename||'').toLowerCase();
+  const fn=(filename||'').toLowerCase();
   if (fn.endsWith('.pdf')) return 'pdf';
-  const t2 = text.slice(0,500);
-  if (t2.includes('[Source]') && t2.includes('Novaschem')) return 'skola24';
+  const t2=text.slice(0,500);
+  if (t2.includes('[Source]')&&t2.includes('Novaschem')) return 'skola24';
   if (/^id\tsubject\tday\t/m.test(t2)) return 'schoolsoft';
-  if (fn.endsWith('.csv') || (text.includes(',') && !text.includes('\t'))) return 'csv';
+  if (fn.endsWith('.csv')||(text.includes(',')&&!text.includes('\t'))) return 'csv';
   return 'tsv';
 }
 
-// Skola24 parser
 function parseSkola24(text) {
-  let cols = null;
-  const lessons = [];
+  let cols=null; const lessons=[];
   for (const raw of text.split('\n')) {
-    const line = raw.trimEnd();
-    if (line.includes('[Rows]') && line.includes('PK')) {
-      const parts = line.replace('[Rows]','').trim().split('\t');
-      cols = {};
-      parts.forEach((c,i) => cols[c.trim()] = i);
-    } else if (cols && line && !line.startsWith('[') && line.includes('\t')) {
-      const p = line.split('\t');
-      const get = k => (p[cols[k]]||'').trim();
-      const day = SWE_DAYS[(get('DayOfWeek')||'').toLowerCase().split(' ')[0]] || get('DayOfWeek');
-      const startMins = parseHHMM(get('Starttime'));
-      const durMins = parseInt(get('Length')||0);
-      lessons.push({
-        id: uid(), subject: get('Subject') || get('Course'), day,
-        startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
-        teachers: splitList(get('Teacher')), groups: splitList(get('Group')), rooms: splitList(get('Room')),
-        period: get('Period'), weeks: get('ActualWeeks') || get('Week'),
-        actType: classifyType(get('Subject') || get('Course')),
-      });
+    const line=raw.trimEnd();
+    if (line.includes('[Rows]')&&line.includes('PK')) { const parts=line.replace('[Rows]','').trim().split('\t'); cols={}; parts.forEach((c,i)=>cols[c.trim()]=i); }
+    else if (cols&&line&&!line.startsWith('[')&&line.includes('\t')) {
+      const p=line.split('\t'); const get=k=>(p[cols[k]]||'').trim();
+      const day=SWE_DAYS[(get('DayOfWeek')||'').toLowerCase().split(' ')[0]]||get('DayOfWeek');
+      const startMins=parseHHMM(get('Starttime')); const durMins=parseInt(get('Length')||0);
+      lessons.push({id:uid(),subject:get('Subject')||get('Course'),day,startTime:hhmm(startMins),endTime:hhmm(startMins+durMins),durationMin:durMins,teachers:splitList(get('Teacher')),groups:splitList(get('Group')),rooms:splitList(get('Room')),period:get('Period'),weeks:get('ActualWeeks')||get('Week'),actType:classifyType(get('Subject')||get('Course'))});
     }
   }
-  if (!lessons.length) return { lessons:[], warn:'No Lesson section found in Skola24 file' };
-  return { lessons };
+  if (!lessons.length) return{lessons:[],warn:'No Lesson section found in Skola24 file'};
+  return{lessons};
 }
 
-// SchoolSoft parser
 function parseSchoolSoft(text) {
-  const lines = text.split('\n').filter(l => l.trim());
-  const header = lines[0].split('\t').map(h => h.trim().toLowerCase());
-  const idx = k => header.indexOf(k);
-  const lessons = [];
-  for (let i = 1; i < lines.length; i++) {
-    const p = lines[i].split('\t');
-    const get = k => (p[idx(k)]||'').trim();
-    const startMins = parseHHMM(get('starttime'));
-    const durMins = parseInt(get('length')||0);
-    const day = SWE_DAYS[(get('day')||'').toLowerCase()] || 'Mon';
-    const subj = get('subject');
-    lessons.push({
-      id: uid(), subject: subj, day,
-      startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
-      teachers: splitList(get('teacher')), groups: splitList(get('group')), rooms: splitList(get('room')),
-      period: get('period'),
-      weeks: (get('realweeks') && get('realweeks') !== '0') ? get('realweeks') : (get('inweek') && get('exweek') ? get('inweek')+'-'+get('exweek') : get('inweek')||''),
-      actType: classifyType(subj),
-    });
+  const lines=text.split('\n').filter(l=>l.trim());
+  const header=lines[0].split('\t').map(h=>h.trim().toLowerCase()); const idx=k=>header.indexOf(k);
+  const lessons=[];
+  for (let i=1;i<lines.length;i++) {
+    const p=lines[i].split('\t'); const get=k=>(p[idx(k)]||'').trim();
+    const startMins=parseHHMM(get('starttime')); const durMins=parseInt(get('length')||0);
+    const day=SWE_DAYS[(get('day')||'').toLowerCase()]||'Mon'; const subj=get('subject');
+    lessons.push({id:uid(),subject:subj,day,startTime:hhmm(startMins),endTime:hhmm(startMins+durMins),durationMin:durMins,teachers:splitList(get('teacher')),groups:splitList(get('group')),rooms:splitList(get('room')),period:get('period'),weeks:(get('realweeks')&&get('realweeks')!=='0')?get('realweeks'):(get('inweek')&&get('exweek')?get('inweek')+'-'+get('exweek'):get('inweek')||''),actType:classifyType(subj)});
   }
-  return { lessons };
+  return{lessons};
 }
 
-// CSV/TSV parser
-const COL_ALIASES = {
-  subject:  ['subject','amne','kurs','course','name'],
-  day:      ['day','dag','weekday'],
-  startTime:['starttime','start','starttid','begin'],
-  length:   ['length','duration','langd'],
-  teacher:  ['teacher','larare','teachers'],
-  group:    ['group','klass','class','grupp'],
-  room:     ['room','sal','lokal'],
-  period:   ['period'],
-  weeks:    ['weeks','veckor','realweeks','inweek'],
-};
+const COL_ALIASES = {subject:['subject','amne','kurs','course','name'],day:['day','dag','weekday'],startTime:['starttime','start','starttid','begin'],length:['length','duration','langd'],teacher:['teacher','larare','teachers'],group:['group','klass','class','grupp'],room:['room','sal','lokal'],period:['period'],weeks:['weeks','veckor','realweeks','inweek']};
 function parseCSVTSV(text, delim) {
-  const lines = text.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return { lessons:[], warn:'File appears empty.' };
-  const header = lines[0].split(delim).map(h => h.trim().toLowerCase());
-  const find = aliases => { for (const a of aliases) { const i = header.findIndex(h => h.includes(a)); if (i>=0) return i; } return -1; };
-  const idxMap = {};
-  for (const [k,aliases] of Object.entries(COL_ALIASES)) idxMap[k] = find(aliases);
-  const foundCols = Object.values(idxMap).filter(i => i >= 0).length;
-  if (foundCols < 2 || (idxMap.subject < 0 && idxMap.day < 0)) {
-    return { lessons:[], warn:'Could not map columns. Header: "' + lines[0].slice(0,120) + '"' };
+  const lines=text.split('\n').filter(l=>l.trim());
+  if (lines.length<2) return{lessons:[],warn:'File appears empty.'};
+  const header=lines[0].split(delim).map(h=>h.trim().toLowerCase());
+  const find=aliases=>{ for(const a of aliases){const i=header.findIndex(h=>h.includes(a));if(i>=0)return i;} return -1; };
+  const idxMap={}; for(const[k,aliases]of Object.entries(COL_ALIASES)) idxMap[k]=find(aliases);
+  if (Object.values(idxMap).filter(i=>i>=0).length<2||(idxMap.subject<0&&idxMap.day<0)) return{lessons:[],warn:'Could not map columns. Header: "'+lines[0].slice(0,120)+'"'};
+  const lessons=[];
+  for (let i=1;i<lines.length;i++) {
+    const p=lines[i].split(delim); const get=k=>idxMap[k]>=0?(p[idxMap[k]]||'').trim():'';
+    const subj=get('subject'); if(!subj&&!get('day')&&!get('startTime')) continue;
+    const startMins=parseHHMM(get('startTime')); const durMins=parseInt(get('length')||0);
+    const day=SWE_DAYS[(get('day')||'').toLowerCase()]||(get('day')||'Mon');
+    lessons.push({id:uid(),subject:subj,day,startTime:hhmm(startMins),endTime:hhmm(startMins+durMins),durationMin:durMins,teachers:splitList(get('teacher')),groups:splitList(get('group')),rooms:splitList(get('room')),period:get('period'),weeks:get('weeks'),actType:classifyType(subj)});
   }
-  const lessons = [];
-  for (let i = 1; i < lines.length; i++) {
-    const p = lines[i].split(delim);
-    const get = k => idxMap[k] >= 0 ? (p[idxMap[k]]||'').trim() : '';
-    const subj = get('subject');
-    if (!subj && !get('day') && !get('startTime')) continue;
-    const startMins = parseHHMM(get('startTime'));
-    const durMins = parseInt(get('length')||0);
-    const day = SWE_DAYS[(get('day')||'').toLowerCase()] || (get('day')||'Mon');
-    lessons.push({
-      id: uid(), subject: subj, day,
-      startTime: hhmm(startMins), endTime: hhmm(startMins + durMins), durationMin: durMins,
-      teachers: splitList(get('teacher')), groups: splitList(get('group')), rooms: splitList(get('room')),
-      period: get('period'), weeks: get('weeks'), actType: classifyType(subj),
-    });
-  }
-  return { lessons };
+  return{lessons};
 }
 
-// PDF parser
 async function parsePDF(file) {
-  if (typeof pdfjsLib === 'undefined') return { lessons:[], warn:'PDF.js not loaded' };
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  let fullText = '';
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const pg = await pdf.getPage(p);
-    const tc = await pg.getTextContent();
-    fullText += tc.items.map(i => i.str).join(' ') + '\n';
-  }
+  if (typeof pdfjsLib==='undefined') return{lessons:[],warn:'PDF.js not loaded'};
+  const buf=await file.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let fullText='';
+  for (let p=1;p<=pdf.numPages;p++) { const pg=await pdf.getPage(p); const tc=await pg.getTextContent(); fullText+=tc.items.map(i=>i.str).join(' ')+'\n'; }
   if (fullText.includes('Novaschem')) return parseSkola24(fullText);
   if (/\bid\b.*\bsubject\b.*\bday\b/i.test(fullText)) return parseSchoolSoft(fullText);
-  const lessons = [];
-  const timeRe = /(\d{1,2}:\d{2})/g;
-  const dayRe  = /\b(Mon|Tue|Wed|Thu|Fri|Mandag|Tisdag|Onsdag|Torsdag|Fredag)\b/gi;
+  const lessons=[]; const timeRe=/(\d{1,2}:\d{2})/g; const dayRe=/\b(Mon|Tue|Wed|Thu|Fri|Mandag|Tisdag|Onsdag|Torsdag|Fredag)\b/gi;
   for (const line of fullText.split('\n')) {
-    const times = [...line.matchAll(timeRe)].map(m => m[1]);
-    const days  = [...line.matchAll(dayRe)].map(m => SWE_DAYS[m[1].toLowerCase()]||m[1]);
-    if (times.length >= 1 && days.length >= 1) {
-      const startMins = parseHHMM(times[0]);
-      const endMins = times[1] ? parseHHMM(times[1]) : startMins + 60;
-      const parts = line.replace(timeRe,'').replace(dayRe,'').trim().split(/\s{2,}/);
-      const subj = parts[0] || '?';
-      lessons.push({ id:uid(), subject:subj, day:days[0], startTime:hhmm(startMins), endTime:hhmm(endMins), durationMin:endMins-startMins, teachers:parts.length>1?[parts[1]]:[], groups:parts.length>2?[parts[2]]:[], rooms:[], period:'', weeks:'', actType:classifyType(subj) });
+    const times=[...line.matchAll(timeRe)].map(m=>m[1]); const days=[...line.matchAll(dayRe)].map(m=>SWE_DAYS[m[1].toLowerCase()]||m[1]);
+    if (times.length>=1&&days.length>=1) {
+      const startMins=parseHHMM(times[0]); const endMins=times[1]?parseHHMM(times[1]):startMins+60;
+      const parts=line.replace(timeRe,'').replace(dayRe,'').trim().split(/\s{2,}/); const subj=parts[0]||'?';
+      lessons.push({id:uid(),subject:subj,day:days[0],startTime:hhmm(startMins),endTime:hhmm(endMins),durationMin:endMins-startMins,teachers:parts.length>1?[parts[1]]:[],groups:parts.length>2?[parts[2]]:[],rooms:[],period:'',weeks:'',actType:classifyType(subj)});
     }
   }
-  const warn = lessons.length === 0 ? 'Could not extract lessons from PDF.' : 'PDF heuristic parse: ' + lessons.length + ' lessons. Results may be imprecise.';
-  return { lessons, warn };
+  return{lessons,warn:lessons.length===0?'Could not extract lessons from PDF.':'PDF heuristic parse: '+lessons.length+' lessons. Results may be imprecise.'};
 }
 
-// File handling
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropzone').classList.remove('drag-over');
-  handleFile(e.dataTransfer.files[0]);
-}
+function handleDrop(e) { e.preventDefault(); document.getElementById('dropzone').classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); }
 
 async function handleFile(file) {
-  if (!file) return;
-  showStatus('loading', 'Reading file...');
-
+  if (!file) return; showStatus('loading','Reading file...');
   try {
-    const fn = file.name.toLowerCase();
-    const isImage = file.type.startsWith('image/') || ['.jpg','.jpeg','.png','.webp','.gif','.bmp'].some(e => fn.endsWith(e));
-
-    if (isImage) {
-      const r = await parseImage(file);
-      finish(r, r.badge || 'image', file.name);
-    } else if (fn.endsWith('.pdf')) {
-      showStatus('loading', 'Extracting PDF text...', 'pdf');
-      const r = await parsePDF(file);
-      finish(r, 'pdf', file.name);
-    } else {
-      const text = await readText(file);
-      const fmt = detectFormat(text, file.name);
-      showStatus('loading', 'Parsing...', fmt);
+    const fn=file.name.toLowerCase();
+    const isImage=file.type.startsWith('image/')||['.jpg','.jpeg','.png','.webp','.gif','.bmp'].some(e=>fn.endsWith(e));
+    if (isImage) { const r=await parseImage(file); finish(r,r.badge||'image',file.name); }
+    else if (fn.endsWith('.pdf')) { showStatus('loading','Extracting PDF text...','pdf'); const r=await parsePDF(file); finish(r,'pdf',file.name); }
+    else {
+      const text=await readText(file); const fmt=detectFormat(text,file.name); showStatus('loading','Parsing...',fmt);
       let r;
-      if (fmt === 'skola24')         r = parseSkola24(text);
-      else if (fmt === 'schoolsoft') r = parseSchoolSoft(text);
-      else if (fmt === 'csv')        r = parseCSVTSV(text, ',');
-      else                           r = parseCSVTSV(text, '\t');
-      finish(r, fmt, file.name);
+      if (fmt==='skola24') r=parseSkola24(text); else if(fmt==='schoolsoft') r=parseSchoolSoft(text); else if(fmt==='csv') r=parseCSVTSV(text,','); else r=parseCSVTSV(text,'\t');
+      finish(r,fmt,file.name);
     }
-  } catch(err) {
-    showStatus('error', 'Parse error: ' + err.message, 'error');
-  }
+  } catch(err) { showStatus('error','Parse error: '+err.message,'error'); }
 }
 
-function readText(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result);
-    reader.onerror = () => rej(new Error('File read error'));
-    reader.readAsText(file, 'UTF-8');
-  });
-}
+function readText(file) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>rej(new Error('File read error')); r.readAsText(file,'UTF-8'); }); }
 
-function finish(r, fmt, filename) {
-  allLessons = r.lessons || [];
+function finish(r,fmt,filename) {
+  allLessons=r.lessons||[];
   if (r.warn) showWarning(r.warn);
-  showStatus('done', 'Parsed ' + filename, fmt, allLessons.length);
-  document.getElementById('resetBtn').style.display = 'block';
+  showStatus('done','Parsed '+filename,fmt,allLessons.length);
+  document.getElementById('resetBtn').style.display='block';
   applyFilters();
 }
 
-// Filters
 function applyFilters() {
-  const exAdmin   = document.getElementById('excAdmin').checked;
-  const exBreak   = document.getElementById('excBreak').checked;
-  const exPassing = document.getElementById('excPassing').checked;
-  const exSupport = document.getElementById('excSupport').checked;
-  const q = (document.getElementById('searchInput').value||'').toLowerCase();
-  filtered = allLessons.filter(l => {
-    if (exAdmin   && l.actType === 'admin')   return false;
-    if (exBreak   && l.actType === 'break')   return false;
-    if (exPassing && l.actType === 'passing') return false;
-    if (exSupport && l.actType === 'support') return false;
-    if (q) { const blob = [l.subject,...l.teachers,...l.groups,...l.rooms].join(' ').toLowerCase(); if (!blob.includes(q)) return false; }
+  const exAdmin=document.getElementById('excAdmin').checked, exBreak=document.getElementById('excBreak').checked;
+  const exPassing=document.getElementById('excPassing').checked, exSupport=document.getElementById('excSupport').checked;
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  filtered=allLessons.filter(l=>{
+    if(exAdmin&&l.actType==='admin') return false; if(exBreak&&l.actType==='break') return false;
+    if(exPassing&&l.actType==='passing') return false; if(exSupport&&l.actType==='support') return false;
+    if(q){const blob=[l.subject,...l.teachers,...l.groups,...l.rooms].join(' ').toLowerCase();if(!blob.includes(q))return false;}
     return true;
   });
-  filtered.sort((a,b) => {
-    let av = a[sortCol], bv = b[sortCol];
-    if (Array.isArray(av)) av = av.join(',');
-    if (Array.isArray(bv)) bv = bv.join(',');
-    if (sortCol === 'day') { av = DAY_ORDER[av]??99; bv = DAY_ORDER[bv]??99; }
-    if (sortCol === 'startTime' || sortCol === 'endTime') { av = parseHHMM(av); bv = parseHHMM(bv); }
-    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  filtered.sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    if(Array.isArray(av)) av=av.join(','); if(Array.isArray(bv)) bv=bv.join(',');
+    if(sortCol==='day'){av=DAY_ORDER[av]??99;bv=DAY_ORDER[bv]??99;}
+    if(sortCol==='startTime'||sortCol==='endTime'){av=parseHHMM(av);bv=parseHHMM(bv);}
+    return av<bv?-sortDir:av>bv?sortDir:0;
   });
-  page = 1;
-  renderTable();
-  document.getElementById('controls').style.display = 'flex';
+  page=1; renderTable(); document.getElementById('controls').style.display='flex';
 }
 
-function sortBy(col) {
-  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
-  applyFilters();
-}
+function sortBy(col) { if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=1;} applyFilters(); }
 
 function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  const start = (page-1)*PAGE_SIZE;
-  const slice = filtered.slice(start, start+PAGE_SIZE);
-  tbody.innerHTML = slice.map(l =>
-    '<tr><td>'+esc(l.subject)+'</td><td class="day-'+l.day+'">'+l.day+'</td><td>'+l.startTime+'</td><td>'+l.endTime+'</td><td>'+l.durationMin+'</td><td>'+l.teachers.map(esc).join(', ')+'</td><td>'+l.groups.map(esc).join(', ')+'</td><td>'+l.rooms.map(esc).join(', ')+'</td><td>'+esc(l.period)+'</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.weeks)+'">'+esc(l.weeks)+'</td><td class="type-'+l.actType+'">'+l.actType+'</td></tr>'
-  ).join('');
-  renderPagination();
-  document.getElementById('tableWrap').style.display = 'block';
+  const tbody=document.getElementById('tableBody'); const start=(page-1)*PAGE_SIZE; const slice=filtered.slice(start,start+PAGE_SIZE);
+  tbody.innerHTML=slice.map(l=>'<tr><td>'+esc(l.subject)+'</td><td class="day-'+l.day+'">'+l.day+'</td><td>'+l.startTime+'</td><td>'+l.endTime+'</td><td>'+l.durationMin+'</td><td>'+l.teachers.map(esc).join(', ')+'</td><td>'+l.groups.map(esc).join(', ')+'</td><td>'+l.rooms.map(esc).join(', ')+'</td><td>'+esc(l.period)+'</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.weeks)+'">'+esc(l.weeks)+'</td><td class="type-'+l.actType+'">'+l.actType+'</td></tr>').join('');
+  renderPagination(); document.getElementById('tableWrap').style.display='block';
 }
 
 function renderPagination() {
-  const total = filtered.length;
-  const pages = Math.ceil(total / PAGE_SIZE);
-  const pg = document.getElementById('pagination');
-  let btns = '';
-  const show = p => { if (p < 1 || p > pages) return; btns += '<button class="page-btn'+(p===page?' active':'')+'" onclick="goPage('+p+')">'+p+'</button>'; };
-  show(1);
-  if (page > 3) btns += '<span style="color:var(--muted);padding:0 4px">...</span>';
-  for (let p = Math.max(2,page-1); p <= Math.min(pages-1,page+1); p++) show(p);
-  if (page < pages-2) btns += '<span style="color:var(--muted);padding:0 4px">...</span>';
-  if (pages > 1) show(pages);
-  pg.innerHTML = '<span>'+total.toLocaleString()+' lessons</span><div class="page-btns"><button class="page-btn" onclick="goPage('+(page-1)+')" '+(page===1?'disabled':'')+'>&#8249;</button>'+btns+'<button class="page-btn" onclick="goPage('+(page+1)+')" '+(page===pages||pages===0?'disabled':'')+'>&#8250;</button></div><span>page '+page+' / '+(pages||1)+'</span>';
+  const total=filtered.length; const pages=Math.ceil(total/PAGE_SIZE); const pg=document.getElementById('pagination');
+  let btns='';
+  const show=p=>{if(p<1||p>pages)return;btns+='<button class="page-btn'+(p===page?' active':'')+'" onclick="goPage('+p+')">'+p+'</button>';};
+  show(1); if(page>3) btns+='<span style="color:var(--muted);padding:0 4px">…</span>';
+  for(let p=Math.max(2,page-1);p<=Math.min(pages-1,page+1);p++) show(p);
+  if(page<pages-2) btns+='<span style="color:var(--muted);padding:0 4px">…</span>';
+  if(pages>1) show(pages);
+  pg.innerHTML='<span>'+total.toLocaleString()+' lessons</span><div class="page-btns"><button class="page-btn" onclick="goPage('+(page-1)+')" '+(page===1?'disabled':'')+'>‹</button>'+btns+'<button class="page-btn" onclick="goPage('+(page+1)+')" '+(page===pages||pages===0?'disabled':'')+'>›</button></div><span>page '+page+' / '+(pages||1)+'</span>';
 }
 
-function goPage(p) {
-  const pages = Math.ceil(filtered.length/PAGE_SIZE);
-  if (p < 1 || p > pages) return;
-  page = p; renderTable();
+function goPage(p) { const pages=Math.ceil(filtered.length/PAGE_SIZE); if(p<1||p>pages) return; page=p; renderTable(); }
+
+function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showStatus(state,msg,fmt,count) {
+  const bar=document.getElementById('statusBar'); bar.style.display='flex';
+  document.getElementById('spinnerEl').style.display=state==='loading'?'block':'none';
+  document.getElementById('statusMsg').textContent=msg;
+  document.getElementById('lessonCount').textContent=count?count+' lessons':'';
+  const badge=document.getElementById('formatBadge');
+  if (fmt) { const labels={skola24:'Skola24 Novaschem',schoolsoft:'SchoolSoft Export',pdf:'PDF',csv:'CSV',tsv:'TSV',image:'Screenshot (Claude Vision)',gemini:'Screenshot (Gemini Vision)',error:'Error'}; badge.className='badge badge-'+fmt; badge.textContent=labels[fmt]||fmt; } else badge.textContent='';
 }
 
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function showStatus(state, msg, fmt, count) {
-  const bar = document.getElementById('statusBar');
-  bar.style.display = 'flex';
-  document.getElementById('spinnerEl').style.display = state==='loading' ? 'block' : 'none';
-  document.getElementById('statusMsg').textContent = msg;
-  document.getElementById('lessonCount').textContent = count ? count+' lessons' : '';
-  const badge = document.getElementById('formatBadge');
-  if (fmt) {
-    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', image:'Screenshot (Claude Vision)', gemini:'Screenshot (Gemini Vision)', error:'Error' };
-    badge.className = 'badge badge-'+fmt;
-    badge.textContent = labels[fmt]||fmt;
-  } else { badge.textContent = ''; }
-}
-
-function showWarning(msg) {
-  const w = document.getElementById('warnings');
-  w.style.display = 'block';
-  w.innerHTML = 'Warning: ' + esc(msg);
-}
+function showWarning(msg) { const w=document.getElementById('warnings'); w.style.display='block'; w.innerHTML='⚠ '+esc(msg); }
 
 function copyTSV() {
-  const header = ['ID','Subject','Day','Start','End','Min','Teachers','Groups','Rooms','Period','Weeks','Type'];
-  const rows = [header, ...filtered.map(l => [l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(';'),l.groups.join(';'),l.rooms.join(';'),l.period,l.weeks,l.actType])];
-  navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n'))
-    .then(() => alert('TSV copied! Paste into Google Sheets.'))
-    .catch(() => alert('Clipboard unavailable'));
+  const header=['ID','Subject','Day','Start','End','Min','Teachers','Groups','Rooms','Period','Weeks','Type'];
+  const rows=[header,...filtered.map(l=>[l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(';'),l.groups.join(';'),l.rooms.join(';'),l.period,l.weeks,l.actType])];
+  navigator.clipboard.writeText(rows.map(r=>r.join('\t')).join('\n')).then(()=>alert('TSV copied! Paste into Google Sheets.')).catch(()=>alert('Clipboard unavailable'));
 }
 
 function exportXLSX() {
-  const wb = XLSX.utils.book_new();
-  const s1Data = [['ID','Subject','Day','Start','End','Duration (min)','Teachers','Groups','Rooms','Period','Weeks','Type']];
-  for (const l of filtered) s1Data.push([l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(', '),l.groups.join(', '),l.rooms.join(', '),l.period,l.weeks,l.actType]);
-  const ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-  XLSX.utils.book_append_sheet(wb, ws1, 'All Lessons');
-  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'teachers'), 'By Teacher');
-  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'groups'), 'By Class');
-  XLSX.utils.book_append_sheet(wb, buildPivotSheet(filtered, 'rooms'), 'By Room');
-  XLSX.utils.book_append_sheet(wb, buildSummarySheet(filtered), 'Summary');
-  XLSX.writeFile(wb, 'schedule_export.xlsx');
+  const wb=XLSX.utils.book_new();
+  const s1Data=[['ID','Subject','Day','Start','End','Duration (min)','Teachers','Groups','Rooms','Period','Weeks','Type']];
+  for(const l of filtered) s1Data.push([l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(', '),l.groups.join(', '),l.rooms.join(', '),l.period,l.weeks,l.actType]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s1Data),'All Lessons');
+  XLSX.utils.book_append_sheet(wb,buildPivotSheet(filtered,'teachers'),'By Teacher');
+  XLSX.utils.book_append_sheet(wb,buildPivotSheet(filtered,'groups'),'By Class');
+  XLSX.utils.book_append_sheet(wb,buildPivotSheet(filtered,'rooms'),'By Room');
+  XLSX.utils.book_append_sheet(wb,buildSummarySheet(filtered),'Summary');
+  XLSX.writeFile(wb,'schedule_export.xlsx');
 }
 
-const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
-const SLOT_START = 7*60; const SLOT_END = 18*60; const SLOT_SIZE = 30;
-
-function buildPivotSheet(lessons, entityKey) {
-  const slots = [];
-  for (let m = SLOT_START; m < SLOT_END; m += SLOT_SIZE) slots.push(hhmm(m));
-  const headers = ['Entity'];
-  for (const d of DAYS) for (const s of slots) headers.push(d+' '+s);
-  const colIdx = (day, slot) => 1 + DAYS.indexOf(day)*slots.length + slots.indexOf(slot);
-  const entities = new Set();
-  for (const l of lessons) for (const e of l[entityKey]) if (e) entities.add(e);
-  const entityArr = [...entities].sort();
-  const grid = {};
-  for (const e of entityArr) { grid[e] = new Array(headers.length).fill(''); grid[e][0] = e; }
-  for (const l of lessons) {
-    if (!l.day || !DAYS.includes(l.day)) continue;
-    const startBucket = Math.floor(parseHHMM(l.startTime)/SLOT_SIZE)*SLOT_SIZE;
-    const endBucket = Math.ceil(parseHHMM(l.endTime)/SLOT_SIZE)*SLOT_SIZE;
-    const label = entityKey==='teachers' ? l.subject+'['+l.groups.join(',')+']' : entityKey==='groups' ? l.subject+'('+l.teachers.join(',')+')'  : l.subject+' '+l.groups.join(',');
-    for (const e of l[entityKey]) {
-      if (!grid[e]) continue;
-      for (let m = startBucket; m < endBucket; m += SLOT_SIZE) {
-        if (m < SLOT_START || m >= SLOT_END) continue;
-        const ci = colIdx(l.day, hhmm(m));
-        if (ci >= 0 && ci < headers.length) { const cur = grid[e][ci]; grid[e][ci] = cur ? cur+' / '+label : label; }
-      }
-    }
+const DAYS=['Mon','Tue','Wed','Thu','Fri']; const SLOT_START=7*60; const SLOT_END=18*60; const SLOT_SIZE=30;
+function buildPivotSheet(lessons,entityKey) {
+  const slots=[]; for(let m=SLOT_START;m<SLOT_END;m+=SLOT_SIZE) slots.push(hhmm(m));
+  const headers=['Entity']; for(const d of DAYS) for(const s of slots) headers.push(d+' '+s);
+  const colIdx=(day,slot)=>1+DAYS.indexOf(day)*slots.length+slots.indexOf(slot);
+  const entities=new Set(); for(const l of lessons) for(const e of l[entityKey]) if(e) entities.add(e);
+  const entityArr=[...entities].sort(); const grid={};
+  for(const e of entityArr){grid[e]=new Array(headers.length).fill('');grid[e][0]=e;}
+  for(const l of lessons){
+    if(!l.day||!DAYS.includes(l.day)) continue;
+    const startBucket=Math.floor(parseHHMM(l.startTime)/SLOT_SIZE)*SLOT_SIZE; const endBucket=Math.ceil(parseHHMM(l.endTime)/SLOT_SIZE)*SLOT_SIZE;
+    const label=entityKey==='teachers'?l.subject+'['+l.groups.join(',')+']':entityKey==='groups'?l.subject+'('+l.teachers.join(',')+')'  :l.subject+' '+l.groups.join(',');
+    for(const e of l[entityKey]){if(!grid[e])continue;for(let m=startBucket;m<endBucket;m+=SLOT_SIZE){if(m<SLOT_START||m>=SLOT_END)continue;const ci=colIdx(l.day,hhmm(m));if(ci>=0&&ci<headers.length){const cur=grid[e][ci];grid[e][ci]=cur?cur+' / '+label:label;}}}
   }
-  return XLSX.utils.aoa_to_sheet([headers, ...entityArr.map(e => grid[e])]);
+  return XLSX.utils.aoa_to_sheet([headers,...entityArr.map(e=>grid[e])]);
 }
-
 function buildSummarySheet(lessons) {
-  const rows = [['Summary'],['']];
-  const bySubject = {};
-  for (const l of lessons) bySubject[l.subject] = (bySubject[l.subject]||0) + 1;
-  rows.push(['Lessons by Subject','Count']);
-  for (const [k,v] of Object.entries(bySubject).sort((a,b)=>b[1]-a[1])) rows.push([k,v]);
-  rows.push(['']);
-  const byTeacher = {};
-  for (const l of lessons.filter(x=>x.actType==='teaching')) for (const t of l.teachers) byTeacher[t] = (byTeacher[t]||0) + l.durationMin;
-  rows.push(['Teaching Hours by Teacher','Minutes','Hours']);
-  for (const [k,v] of Object.entries(byTeacher).sort((a,b)=>b[1]-a[1])) rows.push([k,v,+(v/60).toFixed(1)]);
-  rows.push(['']);
-  const byType = {};
-  for (const l of lessons) byType[l.actType] = (byType[l.actType]||0) + 1;
-  rows.push(['Lessons by Type','Count']);
-  for (const [k,v] of Object.entries(byType)) rows.push([k,v]);
+  const rows=[['Summary'],['']]; const bySubject={};
+  for(const l of lessons) bySubject[l.subject]=(bySubject[l.subject]||0)+1;
+  rows.push(['Lessons by Subject','Count']); for(const[k,v]of Object.entries(bySubject).sort((a,b)=>b[1]-a[1])) rows.push([k,v]);
+  rows.push(['']); const byTeacher={};
+  for(const l of lessons.filter(x=>x.actType==='teaching')) for(const t of l.teachers) byTeacher[t]=(byTeacher[t]||0)+l.durationMin;
+  rows.push(['Teaching Hours by Teacher','Minutes','Hours']); for(const[k,v]of Object.entries(byTeacher).sort((a,b)=>b[1]-a[1])) rows.push([k,v,+(v/60).toFixed(1)]);
+  rows.push(['']); const byType={};
+  for(const l of lessons) byType[l.actType]=(byType[l.actType]||0)+1;
+  rows.push(['Lessons by Type','Count']); for(const[k,v]of Object.entries(byType)) rows.push([k,v]);
   return XLSX.utils.aoa_to_sheet(rows);
 }
 
 function resetApp() {
-  allLessons = []; filtered = []; _uid = 0;
-  document.getElementById('statusBar').style.display = 'none';
-  document.getElementById('controls').style.display = 'none';
-  document.getElementById('tableWrap').style.display = 'none';
-  document.getElementById('warnings').style.display = 'none';
-  document.getElementById('resetBtn').style.display = 'none';
-  document.getElementById('searchInput').value = '';
-  document.getElementById('fileInput').value = '';
+  allLessons=[]; filtered=[]; _uid=0;
+  ['statusBar','controls','tableWrap','warnings'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('resetBtn').style.display='none';
+  document.getElementById('searchInput').value=''; document.getElementById('fileInput').value='';
 }
 </script>
 </body>
