@@ -13,6 +13,7 @@
     --bg: #0d0f0e; --surface: #141714; --surface2: #1c1f1c;
     --border: #2a2e2a; --accent: #b8f0a0; --accent2: #7dd4fc;
     --accent3: #f59e0b; --text: #e8ede8; --muted: #6b756b; --danger: #f87171;
+    --gemini: #4285f4;
   }
   body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
   header { padding: 2rem 3rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 1.5rem; }
@@ -22,22 +23,41 @@
 
   /* API key bar */
   #apiKeyBar {
-    display: flex; align-items: center; gap: 0.75rem;
-    margin-bottom: 1.5rem; padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem; padding: 0.9rem 1rem;
     background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-    font-size: 0.72rem; flex-wrap: wrap;
+    font-size: 0.72rem;
   }
-  #apiKeyBar label { color: var(--muted); white-space: nowrap; }
-  #apiKeyInput {
+  .api-bar-title { color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.65rem; }
+  .api-key-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+  .api-key-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .api-key-row label { color: var(--muted); white-space: nowrap; min-width: 110px; font-size: 0.72rem; }
+  .api-key-row label span { font-size: 0.65rem; opacity: 0.6; }
+  .api-key-row input {
     flex: 1; min-width: 260px;
     background: var(--bg); border: 1px solid var(--border);
     color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.72rem;
     padding: 0.35rem 0.75rem; border-radius: 2px; outline: none; transition: border-color 0.15s;
   }
-  #apiKeyInput:focus { border-color: var(--accent2); }
-  #apiKeyInput::placeholder { color: var(--muted); }
+  .api-key-row input:focus { border-color: var(--accent2); }
+  .api-key-row input::placeholder { color: var(--muted); }
+  .api-key-row input.gemini:focus { border-color: var(--gemini); }
   .api-hint { color: var(--muted); font-size: 0.65rem; }
   .api-hint a { color: var(--accent2); }
+  .api-hint a.gemini-link { color: var(--gemini); }
+
+  /* Provider selector */
+  .provider-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .provider-row label { color: var(--muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .provider-btn {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 0.25rem 0.75rem;
+    border-radius: 2px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.06em;
+  }
+  .provider-btn:hover { border-color: var(--text); color: var(--text); }
+  .provider-btn.active-anthropic { border-color: var(--accent2); color: var(--accent2); background: rgba(125,212,252,0.08); }
+  .provider-btn.active-gemini    { border-color: var(--gemini);  color: var(--gemini);  background: rgba(66,133,244,0.08); }
+  .provider-btn.active-auto      { border-color: var(--accent);  color: var(--accent);  background: rgba(184,240,160,0.08); }
+  .provider-note { font-size: 0.63rem; color: var(--muted); margin-left: 0.5rem; }
 
   /* Drop Zone */
   #dropzone {
@@ -75,6 +95,7 @@
   .badge-csv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
   .badge-tsv       { background: rgba(255,255,255,0.06); color: var(--text);    border: 1px solid var(--border); }
   .badge-image     { background: rgba(192,132,252,0.12); color: #c084fc;        border: 1px solid rgba(192,132,252,0.2); }
+  .badge-gemini    { background: rgba(66,133,244,0.12);  color: var(--gemini);  border: 1px solid rgba(66,133,244,0.2); }
   .badge-error     { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.2); }
   .spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -140,10 +161,28 @@
 
 <main>
   <div id="apiKeyBar">
-    <label>Anthropic API key <em style="opacity:.5">(for screenshot / image parsing)</em></label>
-    <input id="apiKeyInput" type="password" placeholder="sk-ant-…  optional, only needed for .jpg / .png files"
-           oninput="saveKey()" autocomplete="off">
-    <span class="api-hint">Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> &nbsp;·&nbsp; stored in sessionStorage only, never sent anywhere except Anthropic</span>
+    <div class="api-bar-title">API Keys <em style="opacity:.5;text-transform:none;letter-spacing:0">(only needed for image / screenshot parsing)</em></div>
+    <div class="api-key-rows">
+      <div class="api-key-row">
+        <label>Anthropic <span>(Claude)</span></label>
+        <input id="anthropicKeyInput" type="password" placeholder="sk-ant-…"
+               oninput="saveKeys()" autocomplete="off">
+        <span class="api-hint">Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></span>
+      </div>
+      <div class="api-key-row">
+        <label>Google <span>(Gemini)</span></label>
+        <input id="geminiKeyInput" type="password" class="gemini" placeholder="AIza…"
+               oninput="saveKeys()" autocomplete="off">
+        <span class="api-hint">Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="gemini-link">aistudio.google.com</a></span>
+      </div>
+    </div>
+    <div class="provider-row">
+      <label>Use for images:</label>
+      <button class="provider-btn active-auto" id="btnAuto"       onclick="setProvider('auto')">Auto</button>
+      <button class="provider-btn"             id="btnAnthropic"  onclick="setProvider('anthropic')">Anthropic</button>
+      <button class="provider-btn"             id="btnGemini"     onclick="setProvider('gemini')">Gemini</button>
+      <span class="provider-note" id="providerNote">uses whichever key is set; prefers Anthropic</span>
+    </div>
   </div>
 
   <div id="dropzone" onclick="document.getElementById('fileInput').click()"
@@ -221,6 +260,7 @@ let sortCol = 'day';
 let sortDir = 1;
 let page = 1;
 const PAGE_SIZE = 50;
+let imageProvider = 'auto'; // 'auto' | 'anthropic' | 'gemini'
 
 // Day maps
 const SWE_DAYS = {
@@ -248,7 +288,6 @@ function classifyType(subject) {
   return 'teaching';
 }
 
-// Time helpers
 function hhmm(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -264,19 +303,216 @@ function parseHHMM(str) {
 let _uid = 0;
 function uid() { return String(++_uid); }
 
-// API key management
-function saveKey() {
-  const v = document.getElementById('apiKeyInput').value.trim();
-  if (v) sessionStorage.setItem('sc_api_key', v);
-  else sessionStorage.removeItem('sc_api_key');
+// Key management
+function saveKeys() {
+  const ant = document.getElementById('anthropicKeyInput').value.trim();
+  const gem = document.getElementById('geminiKeyInput').value.trim();
+  if (ant) sessionStorage.setItem('sc_anthropic_key', ant); else sessionStorage.removeItem('sc_anthropic_key');
+  if (gem) sessionStorage.setItem('sc_gemini_key', gem);    else sessionStorage.removeItem('sc_gemini_key');
 }
-function getKey() {
-  return sessionStorage.getItem('sc_api_key') || document.getElementById('apiKeyInput').value.trim();
-}
+function getAnthropicKey() { return sessionStorage.getItem('sc_anthropic_key') || document.getElementById('anthropicKeyInput').value.trim(); }
+function getGeminiKey()    { return sessionStorage.getItem('sc_gemini_key')    || document.getElementById('geminiKeyInput').value.trim(); }
+
 window.addEventListener('load', () => {
-  const k = sessionStorage.getItem('sc_api_key');
-  if (k) document.getElementById('apiKeyInput').value = k;
+  const ant = sessionStorage.getItem('sc_anthropic_key');
+  const gem = sessionStorage.getItem('sc_gemini_key');
+  if (ant) document.getElementById('anthropicKeyInput').value = ant;
+  if (gem) document.getElementById('geminiKeyInput').value = gem;
 });
+
+// Provider selector
+function setProvider(p) {
+  imageProvider = p;
+  document.getElementById('btnAuto').className      = 'provider-btn' + (p==='auto'      ? ' active-auto'      : '');
+  document.getElementById('btnAnthropic').className = 'provider-btn' + (p==='anthropic' ? ' active-anthropic' : '');
+  document.getElementById('btnGemini').className    = 'provider-btn' + (p==='gemini'    ? ' active-gemini'    : '');
+  const notes = {
+    auto:      'uses whichever key is set; prefers Anthropic',
+    anthropic: 'always use Claude Vision (Anthropic key required)',
+    gemini:    'always use Gemini Vision (Google key required)',
+  };
+  document.getElementById('providerNote').textContent = notes[p];
+}
+
+// Resolve which provider to actually use
+function resolveProvider() {
+  const hasAnt = !!getAnthropicKey();
+  const hasGem = !!getGeminiKey();
+  if (imageProvider === 'anthropic') return hasAnt ? 'anthropic' : null;
+  if (imageProvider === 'gemini')    return hasGem ? 'gemini'    : null;
+  // auto
+  if (hasAnt) return 'anthropic';
+  if (hasGem) return 'gemini';
+  return null;
+}
+
+// Shared prompt
+const IMAGE_PROMPT = `You are parsing a school schedule image. Extract every lesson/activity you can see into a JSON array.
+
+Return ONLY valid JSON — no explanation, no markdown fences, just the raw JSON array.
+
+Each lesson object must have these fields (use empty string or empty array if unknown):
+{
+  "subject": "subject or activity name",
+  "day": "Mon|Tue|Wed|Thu|Fri",
+  "startTime": "HH:MM",
+  "endTime": "HH:MM",
+  "durationMin": number,
+  "teachers": ["Teacher Name"],
+  "groups": ["Class or Group Name"],
+  "rooms": ["Room"],
+  "period": "",
+  "weeks": ""
+}
+
+Rules:
+- day must be one of: Mon, Tue, Wed, Thu, Fri
+- startTime and endTime must be HH:MM format (24h)
+- If duration is not shown, estimate from context or use 60
+- Include ALL activities visible: lessons, breaks, lunch, admin time etc
+- If a cell shows teacher name, put it in teachers array
+- If a cell shows class/group name, put it in groups array
+
+Return the JSON array now:`;
+
+function normaliseLessons(parsed) {
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map(l => ({
+    id:          uid(),
+    subject:     l.subject || '',
+    day:         SWE_DAYS[(l.day||'').toLowerCase()] || l.day || 'Mon',
+    startTime:   l.startTime || '00:00',
+    endTime:     l.endTime || '00:00',
+    durationMin: l.durationMin || 0,
+    teachers:    Array.isArray(l.teachers) ? l.teachers : splitList(l.teachers||''),
+    groups:      Array.isArray(l.groups)   ? l.groups   : splitList(l.groups||''),
+    rooms:       Array.isArray(l.rooms)    ? l.rooms    : splitList(l.rooms||''),
+    period:      l.period || '',
+    weeks:       l.weeks || '',
+    actType:     classifyType(l.subject || ''),
+  })).filter(l => l.subject || l.startTime !== '00:00');
+}
+
+function parseJsonResponse(raw) {
+  const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  try { return JSON.parse(clean); }
+  catch(e) {
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Unparseable JSON response');
+  }
+}
+
+// Anthropic image parser
+async function parseImageAnthropic(file) {
+  const apiKey = getAnthropicKey();
+  if (!apiKey) return { lessons:[], warn:'No Anthropic API key set.' };
+
+  showStatus('loading', 'Sending to Claude Vision...', 'image');
+  const base64 = await fileToBase64(file);
+  const mediaType = file.type || 'image/jpeg';
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      messages: [{ role:'user', content:[
+        { type:'image', source:{ type:'base64', media_type:mediaType, data:base64 } },
+        { type:'text', text:IMAGE_PROMPT }
+      ]}]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = err.error?.message || resp.statusText;
+    if (resp.status === 401) return { lessons:[], warn:'Invalid Anthropic API key.' };
+    return { lessons:[], warn:'Anthropic API error: ' + msg };
+  }
+
+  const data = await resp.json();
+  const raw = (data.content||[]).filter(b => b.type==='text').map(b => b.text).join('');
+  const parsed = parseJsonResponse(raw);
+  const lessons = normaliseLessons(parsed);
+  const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted — check results.' : null;
+  return { lessons, warn, badge:'image' };
+}
+
+// Gemini image parser
+async function parseImageGemini(file) {
+  const apiKey = getGeminiKey();
+  if (!apiKey) return { lessons:[], warn:'No Google Gemini API key set.' };
+
+  showStatus('loading', 'Sending to Gemini Vision...', 'gemini');
+  const base64 = await fileToBase64(file);
+  const mediaType = file.type || 'image/jpeg';
+
+  const resp = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inline_data: { mime_type: mediaType, data: base64 } },
+          { text: IMAGE_PROMPT }
+        ]}],
+        generationConfig: { temperature: 0, maxOutputTokens: 4096 }
+      })
+    }
+  );
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = err.error?.message || resp.statusText;
+    if (resp.status === 400 || resp.status === 403) return { lessons:[], warn:'Invalid Gemini API key or quota exceeded: ' + msg };
+    return { lessons:[], warn:'Gemini API error: ' + msg };
+  }
+
+  const data = await resp.json();
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  if (!raw) return { lessons:[], warn:'Gemini returned an empty response.' };
+
+  const parsed = parseJsonResponse(raw);
+  const lessons = normaliseLessons(parsed);
+  const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted — check results.' : null;
+  return { lessons, warn, badge:'gemini' };
+}
+
+// Main image dispatcher
+async function parseImage(file) {
+  const provider = resolveProvider();
+  if (!provider) {
+    return { lessons:[], warn:'No API key set. Enter an Anthropic or Gemini key above to parse screenshots.' };
+  }
+  try {
+    if (provider === 'gemini') return await parseImageGemini(file);
+    return await parseImageAnthropic(file);
+  } catch(err) {
+    return { lessons:[], warn:'Network error calling AI API: ' + err.message };
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.onerror = () => rej(new Error('File read error'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function splitList(s) {
+  if (!s) return [];
+  return String(s).split(/[,;|]/).map(x => x.trim()).filter(Boolean);
+}
 
 // Format detection
 function detectFormat(text, filename) {
@@ -416,130 +652,6 @@ async function parsePDF(file) {
   return { lessons, warn };
 }
 
-// Image parser via Claude Vision API
-async function parseImage(file) {
-  const apiKey = getKey();
-  if (!apiKey) {
-    return { lessons:[], warn:'No API key set. Enter your Anthropic API key in the field above to parse screenshots.' };
-  }
-
-  showStatus('loading', 'Sending image to Claude Vision...', 'image');
-
-  const base64 = await fileToBase64(file);
-  const mediaType = file.type || 'image/jpeg';
-
-  const prompt = `You are parsing a school schedule image. Extract every lesson/activity you can see into a JSON array.
-
-Return ONLY valid JSON — no explanation, no markdown fences, just the raw JSON array.
-
-Each lesson object must have these fields (use empty string or empty array if unknown):
-{
-  "subject": "subject or activity name",
-  "day": "Mon|Tue|Wed|Thu|Fri",
-  "startTime": "HH:MM",
-  "endTime": "HH:MM",
-  "durationMin": number,
-  "teachers": ["Teacher Name"],
-  "groups": ["Class or Group Name"],
-  "rooms": ["Room"],
-  "period": "",
-  "weeks": ""
-}
-
-Rules:
-- day must be one of: Mon, Tue, Wed, Thu, Fri
-- startTime and endTime must be HH:MM format (24h)
-- If duration is not shown, estimate from context or use 60
-- Include ALL activities visible: lessons, breaks, lunch, admin time etc
-- If the schedule shows columns as days and rows as time slots (or vice versa), extract accordingly
-- If a cell shows teacher name, put it in teachers array
-- If a cell shows class/group name, put it in groups array
-
-Return the JSON array now:`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      const msg = err.error?.message || resp.statusText;
-      if (resp.status === 401) return { lessons:[], warn:'Invalid API key. Check your key at console.anthropic.com.' };
-      return { lessons:[], warn:'API error: ' + msg };
-    }
-
-    const data = await resp.json();
-    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-
-    // Strip any accidental markdown fences
-    const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-    let parsed;
-    try { parsed = JSON.parse(clean); }
-    catch(e) {
-      // Try to extract JSON array from response
-      const match = clean.match(/\[[\s\S]*\]/);
-      if (match) { try { parsed = JSON.parse(match[0]); } catch(e2) { return { lessons:[], warn:'Claude returned unparseable JSON. Try a clearer screenshot.' }; } }
-      else return { lessons:[], warn:'Claude did not return JSON. Response: ' + clean.slice(0,200) };
-    }
-
-    if (!Array.isArray(parsed)) return { lessons:[], warn:'Expected JSON array, got: ' + typeof parsed };
-
-    const lessons = parsed.map(l => ({
-      id:          uid(),
-      subject:     l.subject || '',
-      day:         SWE_DAYS[(l.day||'').toLowerCase()] || l.day || 'Mon',
-      startTime:   l.startTime || '00:00',
-      endTime:     l.endTime || '00:00',
-      durationMin: l.durationMin || 0,
-      teachers:    Array.isArray(l.teachers) ? l.teachers : splitList(l.teachers||''),
-      groups:      Array.isArray(l.groups)   ? l.groups   : splitList(l.groups||''),
-      rooms:       Array.isArray(l.rooms)    ? l.rooms    : splitList(l.rooms||''),
-      period:      l.period || '',
-      weeks:       l.weeks || '',
-      actType:     classifyType(l.subject || ''),
-    })).filter(l => l.subject || l.startTime !== '00:00');
-
-    const warn = lessons.length < 3 ? 'Only ' + lessons.length + ' lessons extracted. The image may be complex — check results carefully.' : null;
-    return { lessons, warn };
-
-  } catch(err) {
-    return { lessons:[], warn:'Network error calling Claude API: ' + err.message };
-  }
-}
-
-function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result.split(',')[1]);
-    reader.onerror = () => rej(new Error('File read error'));
-    reader.readAsDataURL(file);
-  });
-}
-
-// Helpers
-function splitList(s) {
-  if (!s) return [];
-  return String(s).split(/[,;|]/).map(x => x.trim()).filter(Boolean);
-}
-
 // File handling
 function handleDrop(e) {
   e.preventDefault();
@@ -557,7 +669,7 @@ async function handleFile(file) {
 
     if (isImage) {
       const r = await parseImage(file);
-      finish(r, 'image', file.name);
+      finish(r, r.badge || 'image', file.name);
     } else if (fn.endsWith('.pdf')) {
       showStatus('loading', 'Extracting PDF text...', 'pdf');
       const r = await parsePDF(file);
@@ -628,7 +740,6 @@ function sortBy(col) {
   applyFilters();
 }
 
-// Table render
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   const start = (page-1)*PAGE_SIZE;
@@ -665,7 +776,6 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Status
 function showStatus(state, msg, fmt, count) {
   const bar = document.getElementById('statusBar');
   bar.style.display = 'flex';
@@ -674,7 +784,7 @@ function showStatus(state, msg, fmt, count) {
   document.getElementById('lessonCount').textContent = count ? count+' lessons' : '';
   const badge = document.getElementById('formatBadge');
   if (fmt) {
-    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', image:'Screenshot (Claude Vision)', error:'Error' };
+    const labels = { skola24:'Skola24 Novaschem', schoolsoft:'SchoolSoft Export', pdf:'PDF', csv:'CSV', tsv:'TSV', image:'Screenshot (Claude Vision)', gemini:'Screenshot (Gemini Vision)', error:'Error' };
     badge.className = 'badge badge-'+fmt;
     badge.textContent = labels[fmt]||fmt;
   } else { badge.textContent = ''; }
@@ -686,7 +796,6 @@ function showWarning(msg) {
   w.innerHTML = 'Warning: ' + esc(msg);
 }
 
-// Copy TSV
 function copyTSV() {
   const header = ['ID','Subject','Day','Start','End','Min','Teachers','Groups','Rooms','Period','Weeks','Type'];
   const rows = [header, ...filtered.map(l => [l.id,l.subject,l.day,l.startTime,l.endTime,l.durationMin,l.teachers.join(';'),l.groups.join(';'),l.rooms.join(';'),l.period,l.weeks,l.actType])];
@@ -695,7 +804,6 @@ function copyTSV() {
     .catch(() => alert('Clipboard unavailable'));
 }
 
-// XLSX Export
 function exportXLSX() {
   const wb = XLSX.utils.book_new();
   const s1Data = [['ID','Subject','Day','Start','End','Duration (min)','Teachers','Groups','Rooms','Period','Weeks','Type']];
@@ -737,8 +845,7 @@ function buildPivotSheet(lessons, entityKey) {
       }
     }
   }
-  const aoa = [headers, ...entityArr.map(e => grid[e])];
-  return XLSX.utils.aoa_to_sheet(aoa);
+  return XLSX.utils.aoa_to_sheet([headers, ...entityArr.map(e => grid[e])]);
 }
 
 function buildSummarySheet(lessons) {
@@ -760,7 +867,6 @@ function buildSummarySheet(lessons) {
   return XLSX.utils.aoa_to_sheet(rows);
 }
 
-// Reset
 function resetApp() {
   allLessons = []; filtered = []; _uid = 0;
   document.getElementById('statusBar').style.display = 'none';
